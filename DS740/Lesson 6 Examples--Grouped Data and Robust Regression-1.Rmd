@@ -1,0 +1,238 @@
+---
+title: "Lesson 6 Examples--Grouped Data and Robust Regression"
+author: "Abra Brisbin"
+date: "7/17/2021"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, message=FALSE}
+library(MASS) # for hills data and rlm function
+library(dplyr)
+library(ggformula)
+
+```
+
+## Stores example
+```{r}
+set.seed(30)
+n_cust = c(sample(10:20, 15, replace=T), sample(100:200, 15, replace=T)) # n_cust = number of customers per week at diff stores
+
+avg_time = numeric(length = 30)
+avg_spent = numeric(length = 30)
+for(store in 1:30){
+  time = runif(n_cust[store], 5, 40)
+  spent = .5*time + 5 + rnorm(n_cust[store], 0, 5)
+  avg_time[store] = mean(time)
+  avg_spent[store] = mean(spent)
+}
+
+gf_point(avg_spent ~ avg_time)
+
+```
+
+```{r}
+customers = ifelse(n_cust < 21, "10-20", "100-200")
+gf_point(avg_spent ~ avg_time, color =~ customers, shape =~ customers)
+```
+True model (used to create the simulation) is $$\hat{y} = 5 + 0.5*time$$
+```{r}
+# Unweighted
+fit1 = lm(avg_spent ~ avg_time)
+summary(fit1)
+```
+```{r}
+# Weighted
+fit2 = lm(avg_spent ~ avg_time, weights = n_cust)
+summary(fit2)
+```
+
+```{r}
+lin_mod = data.frame(model = c("Unweighted", "Weighted", "True"), intercepts = c(fit1$coef[1], fit2$coef[1], 5), slopes = c(fit1$coef[2], fit2$coef[2], 0.5))
+
+gf_point(avg_spent ~ avg_time) %>%
+  gf_abline(slope = ~slopes, intercept = ~intercepts, 
+            color =~ model, lty =~ model, lwd = 1.1, 
+            data = lin_mod)
+```
+```{r}
+set.seed(12)
+x = runif(100)
+y = 1 + 3*x + rnorm(100, 0, 1 + 3*x)
+gf_point(y ~ x)
+```
+## IWLS
+```{r}
+fit.w = lm(y~x)
+
+oldcoef = rep(0,length(fit.w$coef))
+newcoef = fit.w$coef
+iter = 0
+
+while(sum(abs(oldcoef-newcoef)) > .0001 & iter < 100){
+  w = 1/(fit.w$fitted.values^2)
+  fit.w = lm(y~x, weights=w)
+  
+  iter = iter + 1
+  oldcoef = newcoef
+  newcoef = fit.w$coef
+}
+
+```
+
+### A more complicated model for noise terms
+```{r}
+set.seed(12)
+x = runif(100)
+y = 3 + 2*x + rnorm(100, 0, sqrt(1-x)) # rnorm uses standard deviation instead of variance
+gf_point(y ~ x)
+```
+
+```{r}
+while(sum(abs(oldcoef-newcoef)) > .0001 & iter < 100){
+  fit.epsilon = lm(fit.w$residuals^2 ~ x)
+  w = 1/fit.epsilon$fitted.values
+  fit.w = lm(y~x, weights=w)
+  
+  iter = iter + 1
+  oldcoef = newcoef
+  newcoef = fit.w$coef
+}
+
+```
+
+### Hill racing
+```{r}
+fit_hills = lm(time ~ dist, data = hills)
+
+hills %>%
+  gf_point(time ~ dist) %>%
+  gf_abline(intercept = fit_hills$coef[1], slope = fit_hills$coef[2]) %>%
+  gf_label(195 ~ 22, label = "OLS")
+```
+
+```{r}
+plot(fit_hills)
+```
+
+### While loop for Tukey's Bisquare method
+```{r}
+fit.w = lm(time ~ dist, data = hills)
+
+oldcoef = rep(0,length(fit.w$coef))
+newcoef = fit.w$coef
+iter = 0 
+
+while(sum(abs(oldcoef-newcoef)) > .0001 & iter < 100){
+    MAR = median(abs(fit.w$residuals))
+    sigma = MAR/0.6745
+    k = 4.685*sigma
+    sqrt_w = pmax(1-(fit.w$residuals/k)^2, 0)
+    w = sqrt_w^2
+    fit.w = lm(time ~ dist, data = hills, weights=w)
+
+    iter = iter + 1
+    oldcoef = newcoef
+    newcoef = fit.w$coef
+}
+
+```
+
+Why do we use pmax?
+```{r}
+tukey = data.frame(r = seq(-6, 6, length = 1000))
+k = 4.685
+
+tukey <- tukey %>%
+  mutate(sqrt_wt = 1-(r/k)^2)  
+```
+
+```{r}
+tukey %>%
+  gf_line(sqrt_wt ~ r) %>%
+  gf_hline(yintercept = 0, lty = 2)
+```
+Highlighting the higher of the two lines
+```{r}
+tukey <- tukey %>%
+  mutate(selected = ifelse(abs(r)< k, sqrt_wt, 0))
+
+tukey %>%
+  gf_line(selected ~ r, lwd = 3, color = "yellow") %>%
+  gf_line(sqrt_wt ~ r) %>%
+  gf_hline(yintercept = 0, lty = 2)
+```
+
+### rlm
+```{r}
+fit_bisquare = rlm(time ~ dist, data = hills, psi = psi.bisquare)
+fit_huber = rlm(time ~ dist, data = hills, psi = psi.huber)
+
+rlm_mod = data.frame(model = c("OLS", "Tukey", "Huber"), 
+                     intercepts = c(fit_hills$coef[1], fit_bisquare$coef[1], fit_huber$coef[1]), 
+                     slopes = c(fit_hills$coef[2], fit_bisquare$coef[2], fit_huber$coef[2]))
+
+hills %>%
+  gf_point(time ~ dist) %>%
+  gf_abline(slope = ~slopes, intercept = ~intercepts, 
+            color =~ model, lty =~ model, lwd = 1.1, 
+            data = rlm_mod)
+```
+
+### Plotting the weights
+
+```{r}
+hills2 <- hills %>%
+  tibble::rownames_to_column("Race")
+
+hills2 <- hills2 %>%
+  mutate(my_label = case_when(fit_bisquare$w < .8 ~ Race,
+                           TRUE ~ ""))
+
+gf_point(fit_bisquare$w ~ 1:dim(hills)[1]) %>%
+  gf_text(fit_bisquare$w - .02 ~ 1:dim(hills)[1], 
+           label = hills2$my_label)
+```
+
+An alternative approach using base R graphics.  Run this code in the console or by knitting the R Markdown document (not by clicking the green arrow in the code cell).
+```{r}
+plot(fit_bisquare$w)
+small_weights = which(fit_bisquare$w < .8)
+car::showLabels(1:dim(hills)[1], fit_bisquare$w, 
+           labels = rownames(hills),
+           method = small_weights)
+```
+
+### Additional notes
+```{r}
+huber = rlm(calls~year, data=phones)
+huber = rlm(calls~year, data = phones, maxit = 50)  
+```
+
+```{r}
+set.seed(42)
+x=c(runif(9),2)
+y=2*x+rnorm(10,0,.25)
+y[10]=1
+
+bisquare = rlm(y ~ x, psi = psi.bisquare)
+gf_point(y ~ x) %>%
+  gf_abline(intercept = bisquare$coef[1], slope = bisquare$coef[2])
+```
+```{r}
+bisquare2 = rlm(y~x, psi=psi.bisquare,
+  weights=c(1,1,1,1,1,1,1,1,1,.1))
+
+bisq_mod = data.frame(model = c("Inital weights = 1", "Intial weights = 1 and 0.1"),
+                      intercepts = c(bisquare$coef[1], bisquare2$coef[1]),
+                      slopes = c(bisquare$coef[2], bisquare2$coef[2]))
+
+gf_point(y ~ x) %>%
+  gf_abline(intercept =~ intercepts, slope =~ slopes,
+            color =~ model, lty =~ model, lwd = 1.2,
+            data = bisq_mod)
+```
+

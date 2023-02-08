@@ -1,0 +1,369 @@
+---
+title: "Homework 1 R markdown"
+author: "Abra Brisbin"
+date: '`r Sys.Date()`'
+output:
+  word_document:
+    fig_height: 4
+    fig_width: 4.5
+  pdf_document:
+    fig_height: 4
+    fig_width: 4.5
+  html_document:
+    fig_height: 4
+    fig_width: 4.5
+---
+
+```{r setup, include=FALSE}
+#require(mosaic)   # Load additional packages here 
+
+# Some customization.  You can alter or delete as desired (if you know what you are doing).
+#trellis.par.set(theme=theme.mosaic()) # change default color scheme for lattice
+knitr::opts_chunk$set(
+  echo = TRUE,
+  tidy=FALSE,     # display code as typed
+  size="small")   # slightly smaller font for code
+```
+
+Load packages here.
+```{r, message=FALSE}
+library(ISLR)
+library(dplyr)
+library(ggformula)
+```
+
+#### Intellectual Property: 
+These problems are the intellectual property of the instructors and may not be reproduced outside of this course.
+
+
+
+## Problem 1: Analyzing Gas Mileage  
+
+
+In this problem, you will use analyze gas mileage using the **Auto** data set from the ISLR library in R.   
+
+#### Question 1 (2 points)
+
+Load the **ISLR** library into R and look at the first few rows of the **Auto** data set.  
+```{r}
+
+```
+
+What data mining strategy would you use to investigate the following questions?  (Note that the orderings for the scenarios and answer choices on Canvas might differ from those shown below.)
+
+*   You are building an app for a used-car website that will take information about the year, engine displacement, and weight of cars, and determine whether they are most likely American (origin = 1), European (2), or Japanese (3).  
+
+**Multiple Choice Answer (AUTOGRADED on Canvas)**:  one of *Regression*, *Classification*, or *Unsupervised learning*
+
+*   The manager of a used-car lot wants to arrange groups of similar cars on the lot.  The manager wants to understand the relationships between the year, engine displacement, and weight of cars to identify informative groupings.  
+
+
+**Multiple Choice Answer (AUTOGRADED on Canvas)**:  one of *Regression*, *Classification*, or *Unsupervised learning*
+
+*   You are building an app for a used-car website that will take information about the year, engine displacement, and weight of cars, and estimate their horsepower.  
+
+
+**Multiple Choice Answer (AUTOGRADED on Canvas)**:  one of *Regression*, *Classification*, or *Unsupervised learning*
+
+
+
+#### Question 2 (3 points)
+
+We would like to use K-nearest neighbors to predict the gas mileage (`mpg`, miles per gallon) of cars based on their weight (in pounds) and their year of manufacture.  Fill in the blanks:  In this analysis, the main reason why standardizing the data is a (good/bad) idea is because the variables (mpg and weight, mpg and year, weight and year) have very (similar/different) (means/standard deviations). 
+
+**Fill-in-the-blank Answer**: 
+ 
+
+
+#### Question 3 (2 points)
+Set R's seed to 1 (for Homework 1) with:
+**set.seed(1)**
+
+Create a `groups` vector of 256 copies of the number 1 (to represent observations that will be in the training set) and 136 copies of the number 2 (to represent observations that will be in the validation set.  Then use **sample()** to randomize the order of the vector.
+
+Make a vector that contains TRUE for each data point of `Auto` that will be in the training set, and FALSE for each data point that will be in the test (or validation) set.
+
+Enter your R code below.  
+
+**Code Answer**: 
+```{r}
+auto <- (Auto)
+
+set.seed(1)
+
+groups = c(rep(1, 256), rep(2, 136))
+random_groups = sample(groups, 392)
+in_train = (random_groups == 1)
+
+```
+
+
+
+#### Question 4 (2 points)
+Standardize the `weight` and `year` columns of the training set.  Then standardize the `weight` and `year` columns of the test set, *using the original mean and standard deviation of the training set*.
+
+Enter your R code below.  
+**Code Answer**: 
+```{r}
+auto1_train <- auto %>%
+  select(weight, year) %>%
+  filter(in_train)
+auto1_test <- auto %>%
+  select(weight, year) %>%
+  filter(!in_train)
+
+auto1_train$year = scale(auto1_train$year)
+auto1_train$weight = scale(auto1_train$weight)
+auto1_test$year = scale(auto1_test$year, 
+                        center = attr(auto1_train$year, "scaled:center"),
+                        scale = attr(auto1_train$year, "scaled:scale"))
+
+auto1_test$weight = scale(auto1_test$weight, 
+                        center = attr(auto1_train$weight, "scaled:center"),
+                        scale = attr(auto1_train$weight, "scaled:scale"))
+```
+
+
+
+#### Question 5: **(3 points)**
+
+Use 1-nearest neighbor regression (fit on the standardized training data) to predict the gas mileage of the cars in the standardized validation set.  Compute the mean squared error.  
+
+Enter your R code below.  
+
+**Code Answer**: 
+```{r}
+predictions = knn.reg(train = auto1_train,
+                       test = auto1_test,
+                       y = Auto$mpg[in_train],
+                       k = 1)
+
+MSE = mean((predictions$pred - Auto$mpg[!in_train])^2)
+MSE
+```
+
+
+
+#### Question 6 (1 point)
+
+What is the MSE for the validation set?  (Round your answer to 2 decimal places.)
+
+Your Answer:  
+**Numeric Answer (AUTOGRADED on Canvas)**:  
+
+### 15.24743
+
+
+#### Question 7 (4 points)**
+
+Use a for() loop to apply K-nearest neighbors regression to the same training and validation sets, for values of k from 1 to 50.  Make a plot of the MSE (calculated for the validation set predictions) as a function of k.  
+
+Enter your R code and plot on this question on Canvas.  (Use **Insert** -> **Image** to insert the plot.)  
+**Code and Graph Answer**: 
+```{r} 
+#There are problems here
+k_vals = seq(1, 50, by = 1)
+
+
+for(ii in 1:length(k_vals)){
+  prediction = knn.reg(train = auto1_train,
+                 test = auto1_test,
+                 y = Auto$mpg[in_train],
+                 k = k_vals[ii])
+  MSE[ii] = mean((prediction$pred - Auto$mpg[!in_train])^2)
+}
+
+gf_line(MSE ~ k_vals)
+
+k_vals[which.min(MSE)]
+min(MSE)
+```
+
+
+
+#### Question 8: **(2 points)**
+
+In your opinion, which value of k is the best choice?  Why?
+
+**Text Answer**: 
+
+
+
+
+## Problem 2:  
+
+In this problem, you will use K-nearest neighbors to classify people’s income as >\$50,000 or \$50,000.
+
+You are about to start **Problem 2 of 2**, which analyzes personal income using the Census_income.csv data file (available under Canvas Lesson 1 resources).   You can find more information at [the data source](https://archive.ics.uci.edu/ml/datasets/census+income).  
+
+Data Source:  Kohavi, R and B. Becker. (1996). [UCI Machine Learning Repository](http://archive.ics.uci.edu/ml). Irvine, CA: University of California, School of Information and Computer Science.  
+
+
+
+
+#### Question 9: (2 points)
+
+Read the data into R.  One-hot encode the variable `Sex`, using `Male` as the default value. (Unfortunately, because this data set is from the US Census, it did not allow allow an option of Intersex, or distinguish between sex and gender.)
+
+Enter your R code below.  
+**Code Answer**: 
+
+```{r}
+income = read_csv("Census_income.csv")
+
+income <- income %>%
+  mutate(Sex = ifelse(Sex == "Male", 1, 0))
+```
+
+
+
+#### Question 10 (2 points)
+
+Set R's random seed to 1 again.  Then randomly sample 20,000 individuals to be in the training set.
+
+Enter your R code below.  
+**Code Answer**: 
+```{r}
+set.seed(1)
+groups = c(rep(1, 20000), rep(2, 12561))
+random_groups = sample(groups, 32561)
+in_train = (random_groups == 1)
+```
+
+
+
+#### Question 11 (2 points)
+Standardize the EducYears and Age variables from the training data.  Combine these with the unstandardized, one-hot encoded Sex variable from the training data to create a data frame `x_train`.
+
+Use the original means and standard deviations from the training data to standardize EducYears and Age from the validation data.  Combine these with the unstandardized, one-hot encoded Sex variable to create a data frame `x_test`. 
+
+Enter your R code below.  
+**Code Answer**: 
+```{r}
+x_train <- income %>%
+  select(EducYears, Age, Sex) %>%
+  filter(in_train)
+x_test <- income %>%
+  select(EducYears, Age, Sex) %>%
+  filter(!in_train)
+
+x_train$EducYears = scale(x_train$EducYears)
+x_train$Age = scale(x_train$Age)
+x_test$EducYears = scale(x_test$EducYears,
+                         center = attr(x_train$EducYears, "scaled:center"),
+                         scale = attr(x_train$EducYears, "scaled:scale"))
+x_test$Age = scale(x_test$Age,
+                   center = attr(x_train$Age, "scaled:center"),
+                   scale = attr(x_train$Age, "scaled:scale"))
+```
+
+auto1_train$year = scale(auto1_train$year)
+auto1_train$weight = scale(auto1_train$weight)
+auto1_test$year = scale(auto1_test$year, 
+                        center = attr(auto1_train$year, "scaled:center"),
+                        scale = attr(auto1_train$year, "scaled:scale")) 
+ 
+ 
+#### Question 12 (2 points)
+
+Use 25-nearest neighbor classification (fit on the training set) to predict whether the income of each individual in the validation set is >50K or <=50K. 
+
+Find the confusion matrix.  You should be able to produce a matrix table with two rows and two columns, similar to the one below. 
+
+Please enter the information as whole numbers.  Note carefully the labels for the rows and columns, and be sure to orient your table accordingly.
+
+```{r}
+predictions = 
+
+```
+
+k_vals = seq(1, 50, by = 1)
+
+
+for(ii in 1:length(k_vals)){
+  prediction = knn.reg(train = auto1_train,
+                 test = auto1_test,
+                 y = Auto$mpg[in_train],
+                 k = k_vals[ii])
+  MSE[ii] = mean((prediction$pred - Auto$mpg[!in_train])^2)
+}
+
+gf_line(MSE ~ k_vals)
+
+k_vals[which.min(MSE)]
+min(MSE)
+
+
+Please enter the information *exactly as it appears in R*.
+
+.                 | Actual income <= 50K | Actual Income > 50K
+----------------- | -------------------- | -------------------
+Classified <= 50K	| **[A]** | **[B]** | 
+Classified > 50K	| **[C]** | **[D]** | 
+	
+
+**Numeric Answer (AUTOGRADED on Canvas)**:  
+[A] =  
+[B] =  
+[C] =  
+[D] =  
+
+
+
+
+#### Question 13 (1 point)
+
+What is the overall error rate on the validation set? Enter your answer as a decimal between 0 and 1, rounded to 4 decimal places.
+
+```{r}
+
+```
+
+**Numeric Answer (AUTOGRADED on Canvas)**:
+
+
+
+#### Question 14 (1 point)
+
+What proportion of people making > $50,000 were misclassified? Enter your answer as a decimal between 0 and 1, rounded to 4 decimal places.
+
+```{r}
+
+```
+
+
+**Numeric Answer(AUTOGRADED on Canvas)**:
+
+ 
+ 
+#### Question 15 (2 points)
+Make a grid of example points with values of education from 1 to 16, ages from 17 to 75, and sex from 0 to 1.  Standardize education and age using the original mean and standard deviation of the training set (from question 11).
+
+Create a data frame, `x_example`, containing the standardized education and age and the unstandardized sex from the example points.  The order of the columns should match the order of the columns in `x_train`.
+
+Enter your R code below.  
+**Code Answer**: 
+```{r}
+
+```
+
+
+
+#### Question 16 (2 points)
+Use 25-nearest neighbors to predict the income classifications of the example points, using the same training data as in question 12.  Make graphs showing the relationship between education, age, sex, and predicted income.
+
+Use **Insert** -> **Image** to upload your graphs to this question on Canvas. 
+
+**Graph Answer**:
+```{r}
+
+
+```
+
+
+
+#### Question 17 (3 points)
+Write 3-6 sentences interpreting the graphs you made in the previous question.  (For purposes of interpreting the results, note that the data are from the 1990s.)
+
+**Text Answer**: 
+

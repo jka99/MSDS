@@ -1,0 +1,197 @@
+---
+title: "Lesson 9 Examples--Support Vector Machines"
+author: "Abra Brisbin"
+date: "7/24/2021"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, message = FALSE}
+library(dplyr)
+library(ggformula)
+library(kernlab)
+library(caret)
+```
+
+## Polynomial Kernel
+
+```{r}
+n = 100
+set.seed(516) 
+poly_example = data.frame(x1 = runif(n, -1, 1), 
+                          x2 = runif(n, -1, 1))
+poly_example <- poly_example %>%
+  mutate(y = factor(ifelse(.5 - 3*x1^2 + x2 > 0, 1, -1)))
+
+polynomial = data.frame(x_poly = seq(-1, 1, by = .01))
+polynomial <- polynomial %>%
+  mutate(y_poly = -.5 + 3*x_poly^2)
+
+gf_line(y_poly ~ x_poly, data = polynomial) %>%
+  gf_point(x2 ~ x1, color =~ y, pch =~ y, data = poly_example) %>%
+  gf_refine(scale_shape_manual(values = c(4,2)),
+            scale_color_manual(values = c("red", "blue")),
+            coord_cartesian(ylim = c(-1,1))) 
+
+```
+
+```{r}
+poly_example <- poly_example %>%
+  mutate(x1_squared = x1^2)
+
+# x_1 squared can't be negative, but we'll include some negative values when plotting the line to make the line look more complete
+linear = data.frame(x1_squared = seq(-.25, 1, by = .01))
+linear <- linear %>%
+  mutate(y_linear = -.5 + 3*x1_squared)
+
+gf_line(y_linear ~ x1_squared, data = linear) %>%
+  gf_point(x2 ~ x1_squared, color =~ y, pch =~ y, 
+           data = poly_example) %>%
+  gf_refine(scale_shape_manual(values = c(4,2)),
+            scale_color_manual(values = c("red", "blue")),
+            coord_cartesian(xlim = c(0,1), ylim = c(-1,1))) 
+  
+```
+
+```{r}
+set.seed(516)
+data_used = poly_example
+
+ctrl = trainControl(method = "cv", number = 10)
+fit_poly = train(y ~ x1 + x2,
+               data = data_used,
+               method = "svmPoly",
+               tuneGrid = expand.grid(C = c(1), 
+                                      degree = c(1,2,3),
+                                      scale = c(1)),  # gamma
+               preProcess = c("center","scale"),
+               trControl = ctrl)
+
+fit_poly
+```
+
+## Radial Kernel
+```{r}
+n = 100
+set.seed(515) 
+radial_example = data.frame(x1 = runif(n, -1, 1), 
+                            x2 = runif(n, -1, 1))
+radial_example <- radial_example %>%
+  tibble::rownames_to_column("Row") %>%
+  mutate(y = factor(ifelse(-.75 + 2*x1^2 + x2^2 > 0, 1, -1)),
+         scale_x1 = scale(x1),
+         scale_x2 = scale(x2))
+
+radial_example %>%
+  gf_point(x2 ~ x1, color =~ y, pch =~ y) %>%
+  gf_refine(scale_shape_manual(values = c(4,2)),
+            scale_color_manual(values = c("red", "blue"))) 
+```
+
+```{r, results = "hide"}
+
+set.seed(515)
+data_used = radial_example
+
+ctrl = trainControl(method = "cv", number = 10)
+fit_radial = train(y ~ x1 + x2,
+               data = data_used,
+               method = "svmRadial",
+               tuneGrid = expand.grid(C = c(.001, .01, .1, 1, 5, 10, 100), 
+                                      sigma = c(0.5, 1, 2, 3, 4)), 
+               preProcess = c("center","scale"),
+               prob.model = TRUE,
+               trControl = ctrl)
+```
+
+```{r}
+fit_radial
+
+```
+
+## Contour curve
+```{r}
+xgrid = expand.grid(x1 = seq(-1, 1, by = .05),
+                    x2 = seq(-1, 1, by = .05))
+
+preds = predict(fit_radial, newdata = xgrid, type = "prob")
+head(preds)
+
+xgrid <- xgrid %>%
+  mutate(prob_classA = preds[ ,1])
+
+head(xgrid)
+```
+
+
+```{r}
+
+ggplot(xgrid, aes(x1, x2, z = prob_classA)) +
+  geom_contour(breaks = .5) +
+  geom_point(aes(x1, x2, shape = y, color = y),
+             data = radial_example, 
+             inherit.aes = FALSE) +
+  scale_shape_manual(values = c(4,2)) +
+  scale_color_manual(values = c("red", "blue"))
+
+```
+
+I haven't figured out how to make the contour-scatterplot in `ggformula`.  Each of these works individually, but not when piped together.  If you figure it out, please let me know!
+```{r}
+gf_contour(prob_classA ~ x1 + x2, breaks = .5, data = xgrid) # %>%
+  gf_point(x2 ~ x1, color =~ y, pch =~ y, data = radial_example)
+```
+
+
+## Comparing methods
+### When to use a linear kernel
+```{r}
+n = 20
+set.seed(517) 
+linear_example = data.frame(x1 = runif(n, 0, 1), 
+                             x2 = runif(n, 0, 1))
+linear_example <- linear_example %>%
+  mutate(y = factor(ifelse(-1 - 2*x1 + 3*x2 > 0, 1, -1)))
+
+linear_example$y[14] = 1 # making the example non-separable
+
+linear_example %>%
+  gf_point(x2 ~ x1, color =~ y, pch =~ y, lwd = 2.5) %>%
+  gf_refine(scale_shape_manual(values = c(4,2)),
+            scale_color_manual(values = c("red", "blue")))
+
+```
+
+### Outlier
+```{r}
+n = 19
+set.seed(524) 
+outlier_example = data.frame(x1 = c(2, runif(n, 0, 1)), 
+                             x2 = c(-1, runif(n, 0, 1)))
+outlier_example <- outlier_example %>%
+  mutate(y = factor(ifelse(-.8 - 2*x1 + 3*x2 > 0, 1, -1)))
+
+outlier_example %>%
+  gf_point(x2 ~ x1, color =~ y, pch =~ y) %>%
+  gf_refine(scale_shape_manual(values = c(4,2)),
+            scale_color_manual(values = c("red", "blue")))
+
+```
+
+### Logistic regression preferred
+```{r}
+n = 20
+set.seed(524) 
+logistic_example = data.frame(x1 = c(runif(n, 0, 1), runif(n, 0.15, 1.15)), 
+                              x2 = c(runif(n, 0, 1), runif(n, 0.15, 1.15)),
+                              y = factor(rep(c(-1, 1), each = n)))
+
+logistic_example %>%
+  gf_point(x2 ~ x1, color =~ y, pch =~ y) %>%
+  gf_refine(scale_shape_manual(values = c(4,2)),
+            scale_color_manual(values = c("red", "blue")))
+```
+

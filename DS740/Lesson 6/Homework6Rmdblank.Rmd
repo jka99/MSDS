@@ -1,0 +1,342 @@
+---
+title: "Homework 6 R markdown"
+author: "(Your name here)"
+date: '`r Sys.Date()`'
+output:
+  word_document:
+    fig_height: 4
+    fig_width: 4.5
+  pdf_document:
+    fig_height: 4
+    fig_width: 4.5
+  html_document:
+    fig_height: 4
+    fig_width: 4.5
+---
+
+
+```{r, setup, include=FALSE}
+#require(mosaic)   # Load additional packages here 
+
+# Some customization.  You can alter or delete as desired (if you know what you are doing).
+#trellis.par.set(theme=theme.mosaic()) # change default color scheme for lattice
+knitr::opts_chunk$set(
+  tidy=FALSE,     # display code as typed
+  size="small")   # slightly smaller font for code
+```
+
+#### **Intellectual Property:**  
+These problems are the intellectual property of the instructors and may not be reproduced outside of this course.
+
+Load necessary packages here.
+```{r}
+
+```
+
+
+## Problem 1: Model Crime Rates with Robust Regression
+
+
+In this problem, you will use robust regression to model crime rates in different states (plus Washington, DC).  
+**Data Set**: Use
+```{r}
+data("crime2005")
+```
+to load the **crime2005** data set, which is in the **smss** package.
+
+
+### Question 1 (1 point):
+
+
+After loading the data **crime2005** data set, use (non-robust) linear regression to model the crime rate per 10,000 people (VI2) as a function of the percentage of the population that live in metropolitan areas (ME) and the percentage of the population that live below the poverty line (PO).  
+
+Fill in the blanks to form the regression equation.  Enter each value to 4 decimal places, exactly as shown in the linear regression output.
+
+```{r, echo=TRUE}
+
+```
+
+**Fill-in-the-blanks Answer (AUTOGRADED on Canvas)**: 
+
+$$\hat{VI2} = ? + ? \cdot ME + ? \cdot PO $$
+
+
+### Question 2 (2 points):
+
+
+Plot the regression diagnostic plots for the model in the previous question. Which states (or other regions) appear to be outliers? Give the names of the states. (It may help to refer to http://www.50states.com/abbreviations.htm.)  
+
+```{r}
+
+```
+
+**Text Answer**: 
+
+
+
+### Question 3 (5 points):
+
+
+**Use a** *while* **loop** to perform iteratively reweighted least squares regression with Huber weights.  
+
+Enter your R code below.  
+
+**Code Answer**: 
+```{r}
+
+
+```
+
+
+
+### Question 4 (1 point):
+
+Fill in the blanks to form the equation for the linear model you found in the previous question.  Enter each value to 4 decimal places, exactly as shown in the linear regression output.
+
+**Hint:**  It may be helpful to use `rlm()` to fit a model with Huber weights, and compare your result with your result from the previous question.  The answers may be slightly different, but not very different.  However, for this question, you should enter your results from the *while* loop.
+
+**Fill-in-the-blanks Answer (AUTOGRADED on Canvas)**: 
+
+$$\hat{VI2} = ? + ? \cdot ME + ? \cdot PO $$
+
+```{r, echo=TRUE}
+
+```
+
+
+### Question 5 (2 points):
+
+
+Use `rlm()` to fit a robust regression model with Tukey’s bisquare weights.
+
+Enter your R code below.  
+
+
+**Code Answer**: 
+```{r, echo=TRUE}
+
+```
+
+
+
+### Question 6 (1 points):
+
+
+Fill in the blanks to form the equation for the linear model you found in the previous question.  Enter each value to 4 decimal places. 
+
+
+**Fill-in-the-blanks Answer (AUTOGRADED on Canvas)**: 
+
+$$\hat{VI2} = ? + ? \cdot ME + ? \cdot PO $$
+
+
+
+
+### Question 7 (2 points):
+
+Fill in the blanks:  The coefficient of `PO` in Tukey's model is (higher/lower) than in the unweighted linear regression model.  This makes sense, because the outlier Washington, D.C. has an especially (high/low) percentage of people living below the poverty line, and its crime rate is (higher/lower) than would be expected based on a linear model.
+
+
+**Fill-in-the-blanks Answer (AUTOGRADED on Canvas)**: 
+
+```{r}
+
+```
+
+
+### Question 8 (2 points):
+
+
+Make a scatterplot of the weights from the Tukey’s bisquare model (as a function of the index in the data set). For each point with a weight less than 0.8, label the point with the state abbreviation.  
+
+Use **Insert** -> **Image** to upload your scatterplot to this question on Canvas.  
+
+**Note:** The STATE column is a factor variable.  For purposes of adding the labels, it may be helpful to convert it to a character variable.
+
+**Graph Answer**: 
+```{r, echo=TRUE}
+
+```
+
+
+
+
+## Problem 2: Account for Correlated Errors in Linear Model
+
+
+In this problem, you will build a linear model for air temperature that accounts for correlated errors.  
+**Data Set**: Download elnino.csv (from Canvas), which contains data from 59 weather buoys in the Pacific Ocean during a 2-week period.
+
+
+
+
+### Question 9 (2 points):
+
+
+Read the elnino.csv data into R and remove the rows with missing data.  
+
+Enter your R code below.  
+
+
+**Code Answer**: 
+```{r, message=FALSE}
+
+```
+
+
+
+
+### Question 10 (1 point):
+
+
+(**Model A**) (Model A) We would like to build a model to predict air temperature (air.temp) as a function of:
+
+- zonal winds (zon.winds),
+- meridional winds (mer.winds),
+- humidity, and
+- the subsurface ocean temperature (s.s.temp).  
+
+(You may be wondering why the wind variables include both positive and negative values.  This is to denote wind direction in addition to wind speed.  For zonal winds, values < 0 indicate west and values > 0 indicate east.  For meridional winds, values < 0 indicate south and values > 0 indicate north.)
+
+Start by fitting an unweighted model using `lm()`.  Plot the residuals vs. the fitted values and the normal Q-Q plot of the residuals.  
+
+Use **Insert** -> **Image** to upload your graph of the residuals vs. the fitted values to this question on Canvas.
+
+
+**Graph Answer**  : 
+```{r,echo=FALSE}
+
+```
+
+
+
+### Question 11 (1 point):
+From the fit of **Model A** in the previous question, use **Insert** -> **Image** to upload the normal Q-Q plot of the residuals to this question on Canvas.
+
+**Graph Answer**
+
+
+
+### Question 12 (2 point):
+Using the plots from the previous two questions, comment on the appropriateness of the linear **Model A.**
+
+**Text Answer**
+
+
+
+### Question 13 (2 points):
+
+
+(**Model B**) Use `gls()` to fit a model with uncorrelated errors. Compare the estimated coefficients from this model to those from Model A.  Why does this make sense?  
+
+
+**Text Answer**: 
+```{r}
+
+```
+
+
+
+
+
+### Question 14 (2 points):
+
+
+Extract the residuals from Model B that correspond to buoy 3 (the first buoy in the data set with complete data for all 14 days). Plot the residuals as a function of the residuals from the previous day.  
+
+Enter your R code below.  
+
+
+**Code Answer**: 
+```{r}
+
+```
+
+
+
+### Question 15 (2 points):
+
+
+A reasonable supposition would be that the air temperature at a particular buoy might be associated with the air temperature on the previous day.  This could induce autocorrelation in the error terms for that buoy.  Does there appear to be autocorrelation within the residuals for buoy 3?  Explain.  
+
+
+**Text Answer**: 
+
+
+
+
+
+### Question 16 (3 points):
+
+
+(**Model C**) Use `gls()` to fit a model that accounts for the possibility that the error terms at each buoy are correlated with the error terms from the same buoy on the previous day.  
+
+- Assume that the error terms at different buoys are independent.  
+- Pay attention to the fact that for some buoys (such as # 23), we are missing data from a day in the middle of the 2-week period.
+
+Enter your R code below.  
+
+
+**Code Answer**: 
+```{r, echo=TRUE}
+
+```
+
+
+
+### Question 17 (1 point):
+
+
+Use the regression Model C to estimate the correlation between the noise terms of the temperatures of consecutive days at the same buoy.  Enter your answer to 4 digits after the decimal point.
+
+**Numeric Answer (AUTOGRADED on Canvas)**:  
+```{r,echo=FALSE}
+
+```
+
+
+
+
+
+### Question 18 (1 point):
+
+
+Estimate the correlation between the noise terms of the temperatures separated by 1 day at the same buoy (for example, Monday and Wednesday).  Enter your answer to 4 digits after the decimal point.
+
+**Numeric Answer (AUTOGRADED on Canvas)**:  
+```{r,echo=FALSE}
+
+```
+
+
+
+### Question 19 (1 point):
+
+Which of the following models can be compared fairly using AIC?  Select all that apply.
+
+**Multiple-Select Answer (Autograded on Canvas)**: One or more of
+
+- Model A and Model B
+- Model B and Model C
+- Model A and Model C
+
+(The answer options may appear in a different order on Canvas.)
+
+
+
+
+### Question 20 (2 points):
+
+
+On the basis of AIC, are Models C and B reasonable alternatives to each other?  If not, which model represents a better tradeoff between fit and number of parameters?  Explain.  
+
+
+**Text Answer**: 
+
+```{r}
+
+```
+
+
+
+

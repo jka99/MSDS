@@ -1,0 +1,60 @@
+library(MASS)
+library(FNN)
+library(dplyr)
+library(ggformula)
+set.seed(100)
+  
+groups = c(rep(1, 350), rep(0, 506-350))
+random_groups = sample(groups, 506)
+in_train = (random_groups == 1)
+
+x_train <- Boston %>%
+  dplyr::select(c(age,rad)) %>%
+  filter(in_train)
+
+x_test <- Boston %>%
+  dplyr::select(c(age,rad)) %>%
+  filter(!in_train)
+
+x_train = scale(x_train)
+
+attr(x_train, "scaled:center")
+attr(x_train, "scaled:scale")
+
+x_test = scale(x_test, center = attr(x_train, "scaled:center"),
+                        scale = attr(x_train, "scaled:scale"))
+
+prediction = knn.reg(train = x_train,
+                     test = x_test,
+                     y = Boston$crim[in_train],
+                     k = 25)
+
+
+### Need to finish watching the lectures ###
+age_to_check = seq(20,100, by = 1)
+rad_to_check = c(seq(1,8, by = 1), 24)
+
+example_data = expand.grid(age_to_check,
+                           rad_to_check)
+example_data <- example_data %>%
+  rename(age = Var1,
+         rad = Var2)
+
+x_example = scale (example_data,
+                   center = attr(x_train, "scaled:center"),
+                   scale = attr(x_train, "scaled:scale"))
+
+predictions = knn.reg(train = x_train,
+                      test = x_example,
+                      y = Boston$crim[in_train],
+                      k = 25)
+
+example_data <- example_data %>%
+  mutate(pred = predictions$pred)
+
+example_data %>%
+  gf_point(rad ~ age, color =~ pred)
+
+example_data %>%
+  filter(rad %in% c(1,8,24)) %>%
+  gf_line(pred ~ age, color =~ factor(rad))

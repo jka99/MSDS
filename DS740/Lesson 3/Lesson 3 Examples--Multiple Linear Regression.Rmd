@@ -1,0 +1,412 @@
+---
+title: "Lesson 3 Examples--Multiple Linear Regression"
+author: "Abra Brisbin"
+date: "7/14/2021"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, message = FALSE}
+library(ISLR) # for College data
+library(dplyr)
+library(corrplot)
+library(RColorBrewer) # colors for correlation plot
+library(car) # for VIF
+library(readr)
+library(ggformula)
+library(leaps)
+```
+## Exploratory data analysis of correlation
+```{r}
+
+my_colleges = College[-96,] # Remove an observation with an unrealistic graduation rate (> 100%)
+my_colleges = my_colleges[ ,c(4, 7,11, 15,18)] # Examine a subset of variables so the scatterplots aren’t too small to read
+pairs(my_colleges)
+
+```
+Correlation plot
+```{r}
+# Take only the numeric variables
+college_numeric = select_if(College[-96, ], is.numeric)
+
+# Compute correlation matrix
+correlations <- cor(college_numeric, 
+                    use = "pairwise.complete.obs")
+
+# Make the correlation plot
+corrplot(correlations, 
+         type = "upper", order = "hclust", 
+         col = rev(brewer.pal(n = 8, name = "RdYlBu")))
+```
+
+### VIF
+```{r}
+fit = lm(Grad.Rate ~ ., data = my_colleges)
+vif(fit)
+```
+
+```{r}
+
+temp_fit = lm(F.Undergrad ~ .-Grad.Rate, 
+              data = my_colleges)
+summary(temp_fit)
+
+```
+#### Replacing a predictor by its residuals
+```{r}
+
+my_colleges <- my_colleges %>%
+  mutate(F.Undergrad_residuals = temp_fit$residuals) %>%
+  select(-F.Undergrad)
+
+```
+
+```{r}
+
+fit2 = lm(Grad.Rate ~ ., data = my_colleges)
+vif(fit2)
+
+```
+
+
+
+## Checking for Multicollinearity in Café Data
+
+```{r}
+cafe = read_csv("cafedata_subset.csv")
+names(cafe) =  make.names(names(cafe), unique = TRUE)
+colnames(cafe)
+```
+
+
+
+
+
+
+
+
+
+Make a correlation plot:
+```{r}
+# Take only the numeric variables
+cafe_numeric = select_if(cafe, is.numeric)
+
+# Compute correlation matrix
+correlations <- cor(cafe_numeric, 
+                    use = "pairwise.complete.obs")
+
+# Make the correlation plot
+pdf("Cafe_correlation.pdf")
+corrplot(correlations, 
+         type = "upper", order = "hclust", 
+         col = rev(brewer.pal(n = 8, name = "RdYlBu")))
+dev.off()
+```
+
+
+
+
+
+
+
+
+```{r}
+head(cafe$t)
+head(table(cafe$Date))
+```
+
+
+```{r}
+length(cafe$Date)
+length(unique(cafe$Date))
+```
+
+
+
+
+
+```{r}
+table(cafe$Day.Code, cafe$Day.of.Week)
+```
+
+
+
+
+
+
+
+
+
+
+```{r}
+fit_cafe = lm(Sales ~ . -Date -Day.Code, data = cafe)
+summary(fit_cafe)
+```
+
+
+
+
+
+
+
+
+```{r}
+cafe %>%
+  mutate(Waste_sum = Bread.Sand.Waste + Wraps.Waste + 
+           Muffins.Waste + Cookies.Waste + 
+           Fruit.Cup.Waste) %>%
+  gf_point(Total.Items.Wasted ~ Waste_sum)
+```
+
+
+
+
+
+
+
+
+
+```{r}
+cafe %>%
+  mutate(is_equal = (Sodas + Coffees ==
+                       Total.Soda.and.Coffee)) %>%
+  group_by(is_equal) %>%
+  summarise(count = n())
+```
+
+
+
+
+
+
+
+
+```{r}
+fit_cafe = lm(Sales ~ t + Day.of.Week + Bread.Sand.Sold +
+                Wraps.Sold + Muffins.Sold + 
+                Cookies.Sold + Fruit.Cup.Sold + 
+                Chips + Juices + Sodas + Coffees +
+                Max.Temp + Total.Items.Wasted, 
+              data = cafe)
+summary(fit_cafe)
+```
+
+
+
+
+
+
+```{r}
+vif(fit_cafe)
+```
+
+
+## Methods of comparison
+```{r}
+fit1 = lm(Grad.Rate ~ S.F.Ratio, data = College)
+fit2 = lm(Grad.Rate ~ S.F.Ratio + Books, data = College)
+
+anova(fit1, fit2)
+
+# To compare logistic regression models, use
+# anova(fit1, fit2, test = "Chi")
+```
+
+```{r}
+
+fit1 = lm(Grad.Rate ~ S.F.Ratio, data = College)
+fit2 = lm(Grad.Rate ~ S.F.Ratio + Books, data = College)
+fit3 = lm(Grad.Rate ~ Private, data = College)
+AIC(fit1, fit2, fit3)
+
+```
+## Regsubsets
+```{r}
+regfit.full = regsubsets(Grad.Rate ~ ., data = College,
+                         method = "exhaustive", nvmax = 17)
+```
+
+```{r}
+regfit.full = regsubsets(Grad.Rate ~ ., data = College,
+                         method = "seqrep", nvmax = 17)
+
+fit = lm(Grad.Rate ~ ., data = College)
+sfit = step(fit, direction = "both")
+```
+
+## Best subsets selection for cafe data
+```{r}
+# leaps package is already loaded
+
+regfit = regsubsets(Sales ~ t + Day.of.Week +
+                Bread.Sand.Sold +
+                Wraps.Sold + Muffins.Sold + 
+                Cookies.Sold + Fruit.Cup.Sold + 
+                Chips + Juices + Sodas + Coffees +
+                Max.Temp + Total.Items.Wasted, 
+                data = cafe, nvmax = 16)
+regfit
+```
+
+```{r}
+plot(regfit)
+```
+
+```{r}
+plot(regfit, scale = "adjr2")
+```
+
+```{r}
+regfit.summary = summary(regfit)
+regfit.summary$bic
+```
+
+```{r}
+plot(regfit.summary$bic, xlab = "Number of variables",
+     ylab = "BIC", type = "l", lwd = 2)
+```
+
+```{r}
+which.min(regfit.summary$bic)
+```
+
+```{r}
+which.min(regfit.summary$cp)
+which.max(regfit.summary$adjr2)
+```
+
+```{r}
+coef(regfit, 10)
+```
+
+
+
+## Cross-Validation for Best Subset Selection
+```{r}
+# Define a predict() function for regsubsets objects
+predict.regsubsets <- function(object, alldata, subset, id, ...){
+    form = as.formula(object$call[[2]])
+    mat = model.matrix(form, alldata)
+    mat = mat[subset, ]
+    
+    if(sum(subset) == 1 | length(subset) == 1){
+      # For LOOCV, convert mat to a matrix
+      mat = t(as.matrix(mat))
+    }
+    
+    coefi = coef(object, id=id)
+    xvars = names(coefi)
+    mat[ , xvars] %*% coefi
+} # end function predict.regsubsets
+
+```
+
+
+
+```{r}
+n = dim(cafe)[1]
+ngroups = n # Using LOOCV
+groups = rep(1:ngroups, length = n)
+
+set.seed(246)
+cvgroups = sample(groups, n)
+
+nvar = 16
+group_error = matrix(NA, nr = ngroups, nc = nvar) 
+              # row = fold, 
+              # column = model size (number of variables)
+
+for(ii in 1:ngroups){ # iterate over folds
+  groupii = (cvgroups == ii)
+  train_data = cafe[!groupii, ]
+  test_data = cafe[groupii, ]
+  
+  
+  cv_fit = regsubsets(Sales ~ t + Day.of.Week +
+                Bread.Sand.Sold +
+                Wraps.Sold + Muffins.Sold + 
+                Cookies.Sold + Fruit.Cup.Sold + 
+                Chips + Juices + Sodas + Coffees +
+                Max.Temp + Total.Items.Wasted, 
+                data = train_data, nvmax = nvar)
+
+    
+  for(jj in 1:nvar){ # iterate over model size
+    
+    y_pred = predict(cv_fit, alldata = cafe, 
+                     subset = groupii, id = jj)
+    # Normally, we'd store this:
+    # all_predicted[groupii, jj] = y_pred 
+    
+    MSE = mean((test_data$Sales - y_pred)^2)
+    group_error[ii, jj] = MSE
+    
+      
+  } # end iteration over model size
+} # end iteration over folds
+
+```
+
+
+```{r}
+
+MSE_overall = apply(group_error, 2, mean)
+
+gf_point(MSE_overall ~ 1:nvar)
+
+```
+
+
+
+
+
+
+
+```{r}
+low_MSE_model = which.min(MSE_overall)
+low_MSE_model
+```
+
+
+
+
+
+
+
+
+```{r}
+std_err = apply(group_error, 2, sd)/sqrt(ngroups)
+std_err[low_MSE_model]
+which(MSE_overall <= MSE_overall[low_MSE_model] +
+                     std_err[low_MSE_model])
+```
+
+
+
+
+
+
+
+
+
+
+Back to the model from the full data set:
+```{r}
+coef(regfit, 2)
+```
+
+
+
+
+
+
+
+
+
+
+
+Simplified model:
+$$\hat{y} = 14.96 + 2.80*Sodas + 2.39*Coffees$$

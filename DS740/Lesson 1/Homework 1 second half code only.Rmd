@@ -1,0 +1,70 @@
+```{r message=FALSE}
+library(readr)
+Census_income <- read_csv("Census_income.csv")
+
+Census_income1 <- Census_income %>% # preserve original df
+  mutate(Sex = ifelse(Sex == 'Male', 1, 0))
+```
+
+```{r}
+set.seed(1)
+a <- dim(Census_income1)[1]
+b <- 20000
+c <- a-b #because math is hard
+groups <- c(rep(1, b), rep(2, c))
+random_groups = sample(groups, a)
+
+in_train = (random_groups == 1)
+
+x_train <- Census_income1 %>%
+  filter(in_train)
+
+x_test <- Census_income1 %>%
+  filter(!in_train)
+
+```
+
+```{r}
+#x_train_std <- x_train[, c("EducYears", "Age")]
+x_train_std <- scale(Census_income1[in_train, c("EducYears", "Age")])
+#x_test_std <- x_test[, c("EducYears", "Age")]
+x_test_std <- scale(Census_income1[!in_train, c("EducYears", "Age")], 
+                    center = attr(x_train_std, "scaled:center"), 
+                    scale = attr(x_train_std, "scaled:scale"))
+
+x_train <- cbind(Census_income1$Sex[in_train], 
+                 x_train_std)
+x_test <- cbind(Census_income1$Sex[!in_train], 
+                x_test_std)
+
+```
+
+```{r}
+prediction <- knn(train = x_train,
+                  test = x_test,
+                  cl = Census_income1$Income[in_train],
+                  k = 25)
+
+table(prediction, Census_income1$Income[!in_train])
+
+```
+
+```{r}
+educ_vals = seq(1, 16, by = 1)
+ages_vals = seq(17, 75, by = 1)
+sex_vals = c(0, 1)
+
+example_grid = expand.grid(educ_vals, ages_vals, sex_vals)
+
+example_std = scale(example_grid[,1:2],
+                    center = attr(x_train_std, "scaled:center"),
+                    scale = attr(x_train_std, "scaled:scale"))
+
+x_example = cbind(example_grid$Var3, example_std)
+```
+
+```{r}
+
+```
+
+

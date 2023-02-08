@@ -1,0 +1,308 @@
+---
+title: "Homework 7 R Markdown"
+author: "(Your name here)"
+date: '`r Sys.Date()`'
+output:
+  word_document:
+    fig_height: 4
+    fig_width: 4.5
+  pdf_document:
+    fig_height: 4
+    fig_width: 4.5
+  html_document:
+    fig_height: 4
+    fig_width: 4.5
+---
+
+
+```{r, setup, include=FALSE}
+#require(mosaic)   # Load additional packages here 
+
+# Some customization.  You can alter or delete as desired (if you know what you are doing).
+#trellis.par.set(theme=theme.mosaic()) # change default color scheme for lattice
+knitr::opts_chunk$set(
+  tidy=FALSE,     # display code as typed
+  size="small")   # slightly smaller font for code
+```
+
+#### **Intellectual Property:**  
+These problems are the intellectual property of the instructors and may not be reproduced outside of this course.
+
+Load additional packages here.
+```{r, message=FALSE}
+
+```
+
+#### **Note**
+The autograders for this assignment are set up to assume that you are using the packages *tree, randomForest,* and *gbm*, **not** *xgboost* or *caret*.
+
+## Problem 1: Analyze Variables with Decision Trees
+
+
+In this problem, you will use decision trees to analyze the variables associated with which brand of orange juice customers choose to purchase.
+
+Data Set: Load the OJ data set, which is in the ISLR package.
+
+
+### Question 1 (1 point) 
+
+After loading the OJ data set, make *STORE* and *StoreID* factor variables.  Set the random seed equal to 7. Use the method from Lesson 1 to divide the data into an 800-row training set and a 270-row test set.
+
+Enter your R code below.
+
+**Code Answer**: 
+```{r, echo=TRUE}
+
+```
+
+
+
+### Question 2 (2 points) 
+
+Fit a tree to the training data, using Purchase as the response variable and all other variables as predictors.  Which variables were used in constructing the tree?  Select all that apply.
+
+**Multiple SELECT Answer (AUTOGRADED on Canvas)**:  
+
+- LoyalCH
+- Store
+- PriceDiff
+- SalePriceCH
+- PriceMM
+- StoreID
+
+```{r}
+
+```
+
+
+
+### Question 3 (2 points) 
+
+What is the error rate on the training set?  Enter your answer to 4 decimal places.
+
+**Numeric Answer (AUTOGRADED on Canvas)**:  
+
+
+
+
+
+### Question 4 (2 points)
+
+Plot the decision tree with category labels.  Use **Insert** -> **Image** to upload your graph to this question on Canvas.
+
+
+**Graph Answer**  : 
+```{r,echo=FALSE}
+
+```
+
+
+
+### Question 5 (2 points)
+For the decision tree you just uploaded, write 3–5 sentences interpreting the fitted model.  Your interpretation should include the phrase "This makes sense because..."
+
+- Note that `PriceDiff` represents (Sale Price of MM) - (Sale Price of CH).  So, negative values of `PriceDiff` mean that Minute Maid is cheaper.
+
+**Text Answer**: 
+
+
+
+
+### Question 6 (2 points)
+
+Compute the confusion matrix for the validation set.  What is the validation set error rate?  Give your answer to 4 decimal places.
+
+**Numeric Answer (AUTOGRADED on Canvas)**:  
+```{r,echo=FALSE}
+
+```
+
+
+
+
+### Question 7 (2 points)
+
+Set the random seed to 7 again.  Use `cv.tree` to perform 10-fold cross-validation on the training data to choose the number of leaves that minimizes the classification error rate.  What are the optimal numbers of leaves? Select all that apply.
+
+**Multiple SELECT Answer (AUTOGRADED on Canvas)**:  One or more of 1, 2, 3, 4, 5, 6, 7, 8, 9
+
+
+```{r}
+
+```
+
+
+
+### Question 8 (1 point) 
+
+Create a pruned tree with 4 leaves.  What is the error rate of the pruned tree on the validation set?  Give your answer to 4 decimal places.
+
+**Numeric Answer (AUTOGRADED on Canvas)**:  
+```{r,echo=FALSE}
+
+```
+
+
+
+
+## Problem 2: Use Boosting to Predict Salaries
+
+
+In this problem, you will use boosting to predict the salaries of baseball players.
+
+Data Set: Load the Hitters data set; it's in the ISLR package.
+
+
+### Question 9 (2 points) 
+
+After loading the Hitters data set, remove the observations with unknown salary.  **Create a new variable** equal to $\log(Salary)$, and then remove the original Salary variable.  
+
+Enter your R code below.
+
+**Code Answer**: 
+```{r, echo=TRUE}
+
+```
+
+
+
+### Question 10 (1 point) 
+
+Perform boosting to predict log(Salary) in terms of the other variables in the data set (excluding Salary).  Use:
+
+* 5000 trees,  
+* a shrinkage parameter of .001, and  
+* an interaction depth of 4.  
+
+Which of the variables is most important for predicting log(Salary) in this model?
+
+**Multiple choice Answer (AUTOGRADED on Canvas)**:  one of  
+
+- CAtBat
+- HmRun
+- CRuns
+- Years
+
+```{r}
+
+```
+
+
+
+### Question 11 (4 points) 
+
+Set the random seed to 7 again.  Then perform 10-fold cross-validation to compare boosting (using the same parameters as in the previous question) to multiple linear regression. 
+
+Enter your R code for both the boosting and the multiple linear regression below.
+
+
+**Code Answer**: 
+```{r, echo=TRUE}
+
+```
+
+
+
+### What MSE do you find for each method?  Give your answers to 4 decimal places.
+
+
+#### Question 12 (1 point) 
+
+Boosting:
+
+**Numeric Answer (AUTOGRADED on Canvas)**:  
+```{r,echo=FALSE}
+
+```
+
+
+
+#### Question 13 (1 point) 
+
+Linear regression:
+
+**Numeric Answer (AUTOGRADED on Canvas)**:  
+```{r,echo=FALSE}
+
+```
+
+
+
+
+
+### Question 14 (1 point) 
+
+Based on MSE, which model is better for predicting log(Salary)?
+
+**Multiple choice Answer (AUTOGRADED on Canvas)**:  one of  
+
+- Boosting
+- Linear regression
+
+
+
+
+## Problem  3: Analyzing Salaries Through Bagging and Random Forests
+
+
+In this problem, you will continue your analysis of the salaries of baseball players using bagging and random forests.
+
+Data Set: Continue to use the Hitters data set.
+
+
+### Question 15 (2 points)
+
+Use `?Hitters` to view what each variable in the data set represents.  Examine some preliminary graphs and summaries of the data.  If we want to use decision trees to analyze this data set, why are random forests a good idea? Explain in 2-4 sentences.
+
+
+**Text Answer**: 
+
+
+
+
+### Question 16 (2 points)
+
+Set the random seed to 7 again.  Perform bagging to predict log(Salary) in terms of the other variables in the data set (excluding Salary).  Use all of the data points with non-missing salary.  What proportion of variation in log(Salary) can be explained by the bagged model?  Give your answer as a percentage between 0 and 100, to 2 digits after the decimal point.
+
+**Numeric Answer (AUTOGRADED on Canvas)**: 
+```{r, echo=TRUE}
+
+```
+
+
+
+
+### Question 17 (2 points) 
+Set the random seed to 7 again.  Use a random forest with 6 variables to predict log(Salary) in terms of the other variables in the data set (excluding Salary).  Use all of the data points with non-missing salary.
+```{r, echo=TRUE}
+
+```
+
+Which of the following variables is more important for predicting log(Salary) in the random forest model?
+
+**Multiple choice Answer (AUTOGRADED on Canvas)**:  one of  
+	
+- Years
+- NewLeague
+
+
+
+
+### Question 18 (1 point) 
+Make a partial dependence plot of the variable you chose in the previous problem.  Use **Insert** -> **Image** to upload your graph to this question on Canvas.
+
+
+**Graph Answer**: 
+
+```{r}
+
+```
+
+
+
+### Question 19 (2 points)
+Write 2-4 sentences interpreting the relationship between predicted log(Salary) and the variable you selected in the previous two problems.  Include a possible explanation for the shape of the relationship.
+
+**Text Answer**:
+
+

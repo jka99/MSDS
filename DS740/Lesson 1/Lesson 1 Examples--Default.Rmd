@@ -1,0 +1,275 @@
+---
+title: "Lesson 1 Examples--Default"
+author: "Abra Brisbin"
+date: "6/19/2021"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Can we predict whether a credit card user will default on their debt?
+
+```{r}
+library(ISLR)
+library(FNN)
+library(dplyr)
+library(ggformula)
+```
+
+```{r}
+head(Default)
+summary(Default)
+```
+
+
+
+
+
+
+
+
+```{r}
+Default2 <- Default %>%
+  mutate(student = ifelse(student == "No", 0, 1))
+
+head(Default2)
+```
+
+
+
+
+
+
+
+
+
+```{r}
+set.seed(123)
+groups = c(rep(1, 6666), rep(2, 3334)) # 1 represents the training set
+random_groups = sample(groups, 10000)
+
+in_train = (random_groups == 1)
+head(in_train)
+```
+
+
+
+
+
+
+
+
+
+### Scaling the data
+```{r}
+sd(Default$balance)
+sd(Default$income)
+```
+
+
+
+
+
+
+
+
+
+
+```{r}
+quant_train_std = scale(Default2[in_train, 3:4])
+quant_test_std = scale(Default2[!in_train, 3:4], 
+    center = attr(quant_train_std, "scaled:center"),
+    scale = attr(quant_train_std, "scaled:scale"))
+```
+
+
+
+
+
+
+
+
+
+
+### Building the model
+```{r}
+x_train = cbind(Default2$student[in_train],
+                quant_train_std)
+x_test = cbind(Default2$student[!in_train],
+               quant_test_std)
+
+predictions = knn(train = x_train, 
+                  test  = x_test,
+                  cl = Default2[in_train, 1],
+                  k = 1)
+
+head(predictions)
+```
+
+
+
+
+
+
+
+
+
+
+```{r}
+table(predictions, 
+      Default$default[!in_train])
+```
+
+
+
+
+
+## Choosing a value of K
+```{r}
+predictions = knn(train = x_train, 
+                  test  = x_test,
+                  cl = Default2[in_train, 1],
+                  k = 1)
+conf_mat = table(predictions,
+                 Default$default[!in_train])
+sum(diag(conf_mat))/3334
+```
+
+
+
+
+```{r}
+K_vals = seq(1, 150, by = 2)
+accuracy = numeric(length = length(K_vals))
+
+for(ii in 1:length(K_vals)){
+  predictions = knn(train = x_train, 
+                  test  = x_test,
+                  cl = Default2[in_train, 1],
+                  k = K_vals[ii])
+  conf_mat = table(predictions,
+                 Default$default[!in_train])
+  accuracy[ii] = sum(diag(conf_mat))/3334
+}
+```
+
+
+
+
+Plot the results
+```{r}
+gf_line(accuracy ~ K_vals, lwd = 2)
+```
+
+
+
+
+
+
+
+
+
+
+
+```{r}
+max(accuracy)
+K_vals[which.max(accuracy)]
+```
+
+
+
+
+
+
+
+
+
+
+
+
+## Interpreting the best model
+```{r}
+summary(Default2)
+```
+
+```{r}
+
+balance_to_check = seq(0, 2600, by = 100)
+income_to_check = seq(500, 73500, by = 1000)
+student_to_check = c(0, 1)
+
+example_data = expand.grid(student_to_check, 
+                           balance_to_check, 
+                           income_to_check)
+
+head(example_data)
+
+```
+
+```{r}
+
+example_std = scale(example_data[ , 2:3], 
+    center = attr(quant_train_std, "scaled:center"),
+    scale = attr(quant_train_std, "scaled:scale"))
+
+# Be sure the columns are in the same  
+# order as the training data
+x_example = cbind(example_data[ ,1],
+                  example_std)
+
+```
+
+```{r}
+
+set.seed(123)
+predictions = knn(train = x_train, 
+                  test  = x_example,
+                  cl = Default2[in_train, 1],
+                  k = 41)
+
+example_data <- example_data %>%
+  mutate(pred = predictions) %>%
+  rename(student = Var1,
+         balance = Var2,
+         income = Var3)
+
+```
+
+```{r}
+
+example_data %>%
+  filter(student == 0) %>%
+  gf_point(balance ~ income, color =~ pred) %>%
+  gf_labs(title = "Non-students")
+
+```
+```{r}
+example_data %>%
+  filter(student == 1) %>%
+  gf_point(balance ~ income, color =~ pred)  %>%
+  gf_labs(title = "Students")
+```
+
+
+
+
+## Tie votes
+```{r}
+train.x = data.frame(x1 = c(1,3,1,3,2), x2 = c(1,1,5,5,2))
+train.y = c("blue", "yellow","blue","yellow","red")
+test.point = data.frame(x1 = c(2.1), x2 = c(2.1))
+
+result = knn(train.x, test.point, 
+             cl = train.y, k = 5, prob = TRUE)
+result[1]
+attr(result, "prob")
+```
+
+```{r}
+train.x = data.frame(x1 = c(1,3,1,3,2), x2 = c(1,1,5,5,2))
+train.y = c("zblue", "yellow","zblue","yellow","red")
+test.point = data.frame(x1 = c(2.1), x2 = c(2.1))
+knn(train.x, test.point, cl = train.y, k = 3, prob = TRUE)
+```

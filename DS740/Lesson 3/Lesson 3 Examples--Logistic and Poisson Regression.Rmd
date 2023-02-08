@@ -1,0 +1,413 @@
+---
+title: "Lesson 3 Examples--Logistic and Poisson Regression"
+author: "Abra Brisbin"
+date: "7/12/2021"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, message=FALSE}
+library(ISLR)
+
+library(ggformula)
+library(dplyr)
+
+library(pROC)
+library(FNN) # for comparison with KNN
+
+library(gpk) # for elephant data
+```
+
+# Logistic Regression
+## Can we predict whether a person will default on their credit card debt?
+
+```{r}
+fit = glm(default ~ student + balance,
+          data = Default, family = "binomial")
+summary(fit)
+```
+### The problem with using $ to specify data
+```{r}
+# This gives the same model as `fit` above, but can cause problems with predictions
+
+ dangerous_fit = glm(Default$default ~ 
+                       Default$student + 
+                       Default$balance,
+                       family = "binomial")
+
+```
+
+Watch what happens when we try to predict a single new data point:
+```{r}
+
+new_point = data.frame(student = "Yes", 
+                       balance = 500)
+
+predict(fit, newdata = new_point, 
+        type = "response") 
+
+# Works fine
+```
+
+Using the model formulated with $, we get 10000 predictions instead of 1.  This happens because `new_point` didn't contain columns with the names `Default$student` and `Default$balance`, so the `predict` function ignored `newdata` and just reported the predictions for the original data set.  This can cause major inaccuracies in cross-validation.
+```{r}
+dangerous_predictions = predict(dangerous_fit, newdata = new_point,
+                                type = "response")
+length(dangerous_predictions)
+head(dangerous_predictions)
+```
+
+### Graphing the model
+```{r}
+
+Default2 <- Default %>%
+  mutate(pred = predict(fit, type = "response"), # Add a column of predictions
+         default01 = ifelse(default == "Yes", 1, 0) # Make a numeric version of `default`
+         )
+
+Default2 %>%
+  gf_line(pred ~ balance, color =~ student, lty =~ student, lwd = 1.3) %>%
+  gf_point(default01 ~ balance, color =~ student, shape =~ student, size = 2)
+
+```
+
+## Cross-validation
+```{r}
+
+n = dim(Default)[1]
+ngroups = 10 # using 10-fold cross-validation
+groups = rep(1:ngroups, length = n)
+
+set.seed(123)
+cvgroups = sample(groups, n)
+all_predicted = numeric(length = n)
+
+for(ii in 1:ngroups){
+  groupii = (cvgroups == ii)
+  train_set = Default[!groupii, ]
+  test_set = Default[groupii, ]
+  
+  model_fit = glm(default ~ student + balance,
+            data = train_set, family="binomial")
+  predicted = predict(model_fit, newdata = test_set,
+                                type="response")
+  all_predicted[groupii] = predicted
+}
+
+```
+
+```{r}
+all_predicted[1:3]
+```
+
+```{r}
+table(all_predicted > 0.5, Default$default)
+```
+
+```{r}
+
+my_roc = roc(response = Default$default, 
+             predictor = all_predicted)
+plot.roc(my_roc)
+
+```
+### Add points
+Find the threshold closest to 0.5:
+```{r}
+to_plot1 = which.min(abs(my_roc$thresholds - 0.5))
+my_roc$thresholds[to_plot1]
+```
+
+
+```{r}
+to_plot2 = which.min(abs(my_roc$thresholds - 0.25))
+my_roc$thresholds[to_plot2]
+```
+
+```{r}
+plot.roc(my_roc)
+points(my_roc$specificities[c(to_plot1, to_plot2)],
+       my_roc$sensitivities[c(to_plot1, to_plot2)], 
+       pch = 19, col = c("red","blue"))
+text(my_roc$specificities[c(to_plot1, to_plot2)] - .105,
+     my_roc$sensitivities[c(to_plot1, to_plot2)],
+     round(my_roc$thresholds[c(to_plot1, to_plot2)], 2))
+```
+
+
+### Here's how to plot the ROC curve using ggformula:
+```{r}
+gf_line(my_roc$sensitivities ~ 1 - my_roc$specificities) %>%
+  gf_abline(slope = 1, intercept = 0, col = "gray")
+```
+
+## Comparing multiple models
+Fit a model based on student and income:
+```{r}
+
+n = dim(Default)[1]
+ngroups = 10 # using 10-fold cross-validation
+groups = rep(1:ngroups, length = n)
+
+set.seed(123)
+cvgroups = sample(groups, n)
+all_predicted2 = numeric(length = n)
+
+for(ii in 1:ngroups){
+  groupii = (cvgroups == ii)
+  train_set = Default[!groupii, ]
+  test_set = Default[groupii, ]
+  
+  model_fit = glm(default ~ student + income,
+            data = train_set, family="binomial")
+  predicted = predict(model_fit, newdata = test_set,
+                                type="response")
+  all_predicted2[groupii] = predicted
+}
+```
+
+```{r}
+my_roc = roc(response=Default$default, predictor=all_predicted)
+my_roc2 = roc(response=Default$default, predictor=all_predicted2)
+plot.roc(my_roc)
+plot.roc(my_roc2, add=T, col="red", lty=2)
+legend("bottomright", legend=c("Student + Balance", "Student +
+Income"),lty=c(1,2), col=c("black","red"))
+
+auc(my_roc)
+auc(my_roc2)
+```
+### In ggformula:
+First, collect key values into a data frame:
+```{r}
+results = data.frame(sensitivity = c(my_roc$sensitivities, my_roc2$sensitivities), 
+                     specificity = c(my_roc$specificities, my_roc2$specificities)
+                    )
+```
+
+Add a column to specify the model.  While we're at it, compute the false positive rate:
+
+```{r}
+results <- results %>%
+  mutate(model = c(rep("Student + Balance", length(my_roc$thresholds)), rep("Student + Income", length(my_roc2$thresholds))),
+         false_positive_rate = 1 - specificity
+         )
+                    
+```
+
+Make the graph:
+```{r}
+results %>%
+  gf_line(sensitivity ~ false_positive_rate, color =~ model) %>%
+  gf_abline(slope = 1, intercept = 0, col = "gray")
+```
+## Comparing logistic regression and KNN
+```{r}
+n = dim(Default)[1]
+ngroups = 10 # using 10-fold cross-validation
+groups = rep(1:ngroups, length = n)
+
+set.seed(123)
+cvgroups = sample(groups, n)
+all_predicted_knn = numeric(length = n)
+
+# Convert student to numeric
+Default2 <- Default %>%
+  mutate(student = ifelse(student == "No", 0, 1))
+
+for(ii in 1:ngroups){
+  groupii = (cvgroups == ii)
+  train_set = Default2[!groupii, ]
+  test_set = Default2[groupii, ]
+  
+  # Scale balance in both sets
+  train_balance_std = scale(train_set$balance)
+  x_train = cbind(train_set$student, train_balance_std)
+  
+  test_balance_std = scale(test_set$balance, 
+                             center = attr(train_balance_std, "scaled:center"),
+                             scale = attr(train_balance_std, "scaled:scale"))
+  x_test = cbind(test_set$student, test_balance_std)
+  
+  predicted = knn(train = x_train, 
+                  test  = x_test,
+                  cl = train_set$default,
+                  k = 41,
+                  prob = TRUE) # Set prob = TRUE to extract predicted probabilities
+  
+  prob = attr(predicted, "prob")
+  
+  # Prob contains the probability of belonging to the predicted class.
+  # We want to convert this into the probability of defaulting.
+  prob_of_default = ifelse(predicted == "No", 1-prob, prob)
+  all_predicted_knn[groupii] = prob_of_default
+}
+```
+
+
+
+
+### Make the ROC curves
+
+```{r}
+my_roc = roc(response = Default$default, predictor = all_predicted)
+my_roc_knn = roc(response = Default$default, predictor = all_predicted_knn)
+
+# Collect key values into a data frame:
+results = data.frame(sensitivity = c(my_roc$sensitivities, my_roc_knn$sensitivities), 
+                     specificity = c(my_roc$specificities, my_roc_knn$specificities)
+                    )
+
+
+# Add a column to specify the model.  While we're at it, compute the false positive rate:
+results <- results %>%
+  mutate(model = c(rep("Logistic", length(my_roc$thresholds)), rep("KNN", length(my_roc_knn$thresholds))),
+         false_positive_rate = 1 - specificity
+         )
+                    
+
+# Make the graph:
+results %>%
+  gf_line(sensitivity ~ false_positive_rate, color =~ model) %>%
+  gf_abline(slope = 1, intercept = 0, col = "gray")
+```
+
+### ROC curves use predicted probabilities, not classifications
+The following is INCORRECT:
+```{r}
+n = dim(Default)[1]
+ngroups = 10 # using 10-fold cross-validation
+groups = rep(1:ngroups, length = n)
+
+set.seed(123)
+cvgroups = sample(groups, n)
+all_predicted_knn = numeric(length = n)
+
+# Convert student to numeric
+Default2 <- Default %>%
+  mutate(student = ifelse(student == "No", 0, 1))
+
+for(ii in 1:ngroups){
+  groupii = (cvgroups == ii)
+  train_set = Default2[!groupii, ]
+  test_set = Default2[groupii, ]
+  
+  # Scale balance in both sets
+  train_balance_std = scale(train_set$balance)
+  x_train = cbind(train_set$student, train_balance_std)
+  
+  test_balance_std = scale(test_set$balance, 
+                             center = attr(train_balance_std, "scaled:center"),
+                             scale = attr(train_balance_std, "scaled:scale"))
+  x_test = cbind(test_set$student, test_balance_std)
+  
+  predicted = knn(train = x_train, 
+                  test  = x_test,
+                  cl = train_set$default,
+                  k = 41)
+  
+  all_predicted_knn[groupii] = predicted
+  
+}
+```
+
+#### The ROC curve based on predicted classifications (incorrect) has just 3 points connected by lines
+
+```{r}
+my_roc = roc(response = Default$default, predictor = all_predicted)
+my_roc_knn = roc(response = Default$default, predictor = all_predicted_knn)
+
+# Collect key values into a data frame:
+results = data.frame(sensitivity = c(my_roc$sensitivities, my_roc_knn$sensitivities), 
+                     specificity = c(my_roc$specificities, my_roc_knn$specificities)
+                    )
+
+
+# Add a column to specify the model.  While we're at it, compute the false positive rate:
+results <- results %>%
+  mutate(model = c(rep("Logistic", length(my_roc$thresholds)), rep("KNN", length(my_roc_knn$thresholds))),
+         false_positive_rate = 1 - specificity
+         )
+                    
+
+# Make the graph:
+results %>%
+  filter(model == "KNN") %>%
+  gf_line(sensitivity ~ false_positive_rate, color =~ model) %>%
+  gf_abline(slope = 1, intercept = 0, col = "gray")
+```
+
+### Cost functions
+```{r}
+cost = matrix(c(100,-10, -1000, 10), nc = 2)
+cost
+
+conf_matrix = table(all_predicted > 0.5, 
+                    Default$default)
+conf_matrix
+
+conf_matrix * cost
+
+sum(conf_matrix * cost)
+
+```
+```{r}
+
+prob_thresh = seq(.01, .98, by = .01)
+total_cost = numeric(length = length(prob_thresh))
+
+for(ii in 1:length(prob_thresh)){
+  conf_matrix = table(all_predicted > prob_thresh[ii],
+                      Default$default)
+  total_cost[ii] = sum(conf_matrix * cost)
+}
+
+```
+
+```{r}
+gf_point(total_cost ~ prob_thresh)
+```
+```{r}
+max(total_cost)
+prob_thresh[which.max(total_cost)]
+```
+
+# Poisson regression
+## Can we predict how many times an elephant will mate?
+```{r}
+data("elephant")
+
+elephant %>%
+  gf_point(jitter(Number_of_Matings) ~ Age_in_Years) %>%
+  gf_refine(scale_y_continuous(breaks = c(0,2,4,6,8,10)))
+
+```
+
+```{r}
+
+fit_elephant = glm(Number_of_Matings ~ Age_in_Years, 
+                   data = elephant, family = "poisson")
+
+```
+
+```{r}
+elephant2 <- elephant %>%
+  mutate(log_means = predict(fit_elephant))
+
+elephant2 %>%
+  gf_point(log(Number_of_Matings) ~ Age_in_Years) %>%
+  gf_line(log_means ~ Age_in_Years)
+```
+
+```{r}
+elephant2 <- elephant2 %>%
+  mutate(mean_matings = exp(log_means))
+
+elephant2 %>%
+  gf_point(Number_of_Matings ~ Age_in_Years) %>%
+  gf_line(mean_matings ~ Age_in_Years)
+```
+

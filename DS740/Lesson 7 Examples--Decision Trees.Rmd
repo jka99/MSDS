@@ -1,0 +1,211 @@
+---
+title: "Lesson 7 Examples--Decision Trees"
+author: "Abra Brisbin"
+date: "7/1/2021"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, message = FALSE}
+# To use readr, uncomment lines 16, 23, 45, 86, 141, 152
+# and comment out lines 24, 48, 87, 140, 153
+
+#library(readr) 
+library(tree)
+```
+
+# Can we predict whether an object is rock or metal based on its sonar reading?
+
+```{r}
+#sonar = read_csv("Sonar_rock_metal.csv", col_names = FALSE)
+sonar = read.csv("Sonar_rock_metal.csv", header = FALSE)
+head(sonar)
+```
+```{r}
+dim(sonar)
+```
+
+
+
+
+
+```{r}
+set.seed(728)
+groups = c(rep(1, 140), rep(2, 68)) # 1 represents the training set
+random_groups = sample(groups, 208)
+
+in_train = (random_groups == 1)
+```
+
+```{r}
+# read_csv names the columns "X" + number
+#my_tree = tree(factor(X61) ~ ., data = sonar[in_train, ])
+
+# read.csv names the columns "V" + number
+my_tree = tree(factor(V61) ~ ., data = sonar[in_train, ])
+
+summary(my_tree)
+```
+
+
+
+
+```{r}
+pdf("Sonar.pdf") # If this file is open, this line will give an error
+
+par(mar = c(.1,.1,.1,.1))
+plot(my_tree)
+text(my_tree, pretty = 0)
+
+dev.off()
+```
+
+
+
+
+
+
+```{r}
+preds = predict(my_tree, newdata = sonar[!in_train, ], type = "class")
+  # type = "class" returns predicted response classes
+  # type = "vector" returns predicted probabilities
+```
+
+
+
+
+
+
+
+
+
+```{r}
+#conf_mat = table(preds, sonar$X61[!in_train])
+conf_mat = table(preds, sonar$V61[!in_train])
+conf_mat
+```
+```{r}
+sum(diag(conf_mat)) / 68  # Accuracy
+1 - sum(diag(conf_mat))/68 # Error rate
+```
+
+
+
+
+
+
+
+## Use 10-fold CV to choose the optimal number of leaves
+```{r}
+set.seed(728)
+sonar.cv = cv.tree(my_tree, FUN = prune.misclass)
+  # for regression, use prune.tree
+sonar.cv
+```
+
+```{r}
+plot(sonar.cv)
+```
+
+
+
+
+
+## Extracting the optimal number of leaves
+```{r}
+min(sonar.cv$dev)
+which(sonar.cv$dev == min(sonar.cv$dev))
+sonar.cv$size[ which(sonar.cv$dev == min(sonar.cv$dev)) ]
+```
+
+
+
+
+
+
+
+
+
+```{r}
+prune_sonar = prune.misclass(my_tree,
+                             best = 4)
+plot(prune_sonar)
+text(prune_sonar, pretty = 0)
+```
+
+```{r}
+prune_sonar
+#prune_sonar$frame # If using readr, copy this into the console (it may not work in the .Rmd)
+```
+
+
+
+
+
+
+
+## Changing parameters about when to split the predictor space
+```{r}
+#detailed_tree = tree(factor(X61) ~ ., data = sonar,control = tree.control(nobs = 208, mindev = 0, minsize = 2))
+detailed_tree = tree(factor(V61) ~ ., data = sonar,control = tree.control(nobs = 208, mindev = 0, minsize = 2))
+
+pdf("Detailed_Sonar.pdf")
+plot(detailed_tree)
+text(detailed_tree)
+dev.off()
+```
+
+
+
+
+
+
+
+# Decision trees in caret
+In this example, we'll build a decision tree in caret to predict crime rates in Boston neighborhoods.
+
+To make decision trees in `caret`, we'll use the `rpart` package.  (Unfortunately, the `tree` package doesn't currently interface with `caret`.)
+```{r, message = FALSE}
+library(caret)
+library(MASS) # for Boston data
+library(rpart) # a different package for making trees
+
+library(rattle) # for fancy tree graph
+```
+
+We'll use 5-fold cross-validation to select an optimal value of *cp*, the complexity parameter.  This parameter tells R, "When we can’t find a split that improves the fit by at least this much, stop adding splits."  Therefore, lower cp values result in a more complex tree.
+
+```{r}
+
+set.seed(789)
+data_used = Boston
+
+ctrl = trainControl(method = "cv", number = 5)
+fit_crim = train(crim ~ ., 
+             data = data_used,
+             method = "rpart",
+             na.action = na.exclude,
+             tuneGrid = expand.grid(cp = seq(0, .15, by = .01)),
+             trControl = ctrl)
+
+fit_crim 
+
+```
+
+We can use the following code (from the `rattle` package) to make fancy graphs of `rpart` models.  In `caret`, the "finalModel" is the best model that `caret` found (in this case, `cp` = 0.13), fit on the whole data set.  This is the model we're graphing.
+```{r}
+fancyRpartPlot(fit_crim$finalModel)
+```
+
+Here, the interpretation would be:
+
+* The most important variable in predicted crime rate is accessibility to radial highways.  Areas with low accessibility (`rad` < 16) have the lowest predicted crime rate, 0.39.
+* For areas that are more accessible by highway, the median home value (`medv`) is important.  Areas where the median home value was less than $11,000 (in 1978) have the highest predicted crime rate, 25.
+
+We can view the details of the tree in the same way as we did for trees created using the `tree` package.  Notice that because this is a regression tree, each node is labeled with the mean crime rate of neighborhoods in that node, rather than a pair of probabilities.
+```{r}
+fit_crim$finalModel
+```

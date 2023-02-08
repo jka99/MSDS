@@ -1,0 +1,267 @@
+---
+title: "Lesson 1 Examples--Housing Prices"
+author: "Abra Brisbin"
+date: "6/20/2021"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Can we predict the price of homes?
+
+```{r, message=FALSE}
+library(FNN)
+library(readr)
+library(dplyr)
+library(ggformula)
+```
+
+Reading in the data.
+```{r}
+ames = read_csv("AmesHousing.csv", guess_max = 1064)
+head(ames)
+```
+
+
+
+
+### Example of one-hot encoding in linear regression
+```{r}
+fit_lm = lm(SalePrice ~ `Lot Shape` + `Year Built`, data = ames)
+summary(fit_lm)
+```
+
+
+
+
+### One-hot encoding Lot Shape
+```{r}
+ames %>%
+  group_by(`Lot Shape`) %>%
+  summarise(count = n())
+```
+
+One-hot encode Lot Shape with 4 indicators:
+```{r}
+
+ames <- ames %>%
+  mutate(is_IR1 = ifelse(`Lot Shape` == "IR1", 1, 0),
+         is_IR2 = ifelse(`Lot Shape` == "IR2", 1, 0),
+         is_IR3 = ifelse(`Lot Shape` == "IR3", 1, 0),
+         is_Reg = ifelse(`Lot Shape` == "Reg", 1, 0))
+
+```
+
+
+### Example when treating year as quantitative is beneficial
+```{r}
+set.seed(300)
+year = seq(2000, 2020, by = 1)
+response = (year - 2010) + rnorm(21)
+
+gf_point(response ~ year) %>%
+  gf_line(response ~ year)
+```
+
+```{r}
+set.seed(300)
+year = seq(2000, 2020, by = 1)
+response = (year - 2010)^2 + rnorm(21, 0, 10)
+
+gf_point(response ~ year) %>%
+  gf_line(response ~ year)
+```
+
+Example when treating year as categorical is beneficial
+```{r}
+year = seq(2000, 2005, by = 1)
+response = c(8,1,2,10,5,8)
+
+gf_point(response ~ year) %>%
+  gf_line(response ~ year)
+```
+
+### Why we set the seed
+```{r}
+
+set.seed(200)
+sample(1:10, 1)
+```
+
+```{r}
+set.seed(200)
+sample(1:10, 1)
+```
+
+```{r}
+set.seed(200)
+sample(1:10, 1)
+sample(1:10, 1)
+```
+
+
+
+
+### Creating the training and validation sets
+```{r}
+dim(ames)
+```
+
+```{r}
+
+set.seed(300)
+groups = c(rep(1, 2000), rep(2, 930)) 
+      # 1 represents the training set
+random_groups = sample(groups, 2930)
+
+in_train = (random_groups == 1)
+```
+
+
+
+```{r}
+x_train <- ames %>%
+  select(c(`Year Built`, 
+           is_IR1, is_IR2, is_IR3, is_Reg)) %>%
+  filter(in_train)
+
+x_test <- ames %>%
+  select(c(`Year Built`, 
+           is_IR1, is_IR2, is_IR3, is_Reg)) %>%
+  filter(!in_train)
+```
+
+
+
+
+### Scale `Year Built`
+```{r}
+x_train$`Year Built` = scale(x_train$`Year Built`)
+x_test$`Year Built` = scale(x_test$`Year Built`, 
+    center = attr(x_train$`Year Built`, "scaled:center"),
+    scale = attr(x_train$`Year Built`, "scaled:scale"))
+```
+
+
+
+
+
+
+
+
+### Building the model
+```{r}
+predictions = knn.reg(train = x_train, 
+                  test  = x_test,
+                  y = ames$SalePrice[in_train],
+                  k = 1)
+
+head(predictions$pred)
+```
+
+
+
+
+
+
+
+
+### Compute MSE
+```{r}
+mean( (predictions$pred - ames$SalePrice[!in_train])^2 )
+```
+
+
+
+
+
+
+
+
+
+### Compute Mean Absolute Error (MAE)
+```{r}
+MAE = mean( abs(predictions$pred - ames$SalePrice[!in_train]) )
+MAE
+```
+
+
+
+```{r}
+summary(ames$SalePrice)
+```
+
+
+
+
+```{r}
+MAE/160000
+MAE/755000
+```
+
+
+
+
+
+
+
+
+
+
+
+
+### Interpreting the model
+Not many data points in the training set from earlier years:
+```{r}
+summary(ames$`Year Built`)
+
+ames %>%
+  filter(in_train) %>%
+  mutate(Year_Built = `Year Built`) %>%
+  gf_histogram(~Year_Built)
+```
+
+So I'll focus on houses built in 1920-2010.  Those predictions will be more reliable than predictions for houses built earlier.
+```{r}
+year_to_check = seq(1920, 2010, by = 1)
+lot_to_check = c("IR1", "IR2", "IR3", "Reg")
+
+example_data = expand.grid(year_to_check, 
+                           lot_to_check)
+
+example_data <- example_data %>%
+  rename(Year_Built = Var1,
+         Lot_Shape = Var2) %>%
+  mutate(is_IR1 = ifelse(Lot_Shape == "IR1", 1, 0),
+         is_IR2 = ifelse(Lot_Shape == "IR2", 1, 0),
+         is_IR3 = ifelse(Lot_Shape == "IR3", 1, 0),
+         is_Reg = ifelse(Lot_Shape == "Reg", 1, 0))
+
+example_std = scale(example_data$Year, 
+                      center = attr(x_train$`Year Built`, "scaled:center"),
+                      scale = attr(x_train$`Year Built`, "scaled:scale"))
+
+x_example = cbind(example_std, example_data$is_IR1, 
+                  example_data$is_IR2, example_data$is_IR3,
+                  example_data$is_Reg)
+```
+
+```{r}
+predictions = knn.reg(train = x_train, 
+                  test  = x_example,
+                  y = ames$SalePrice[in_train],
+                  k = 1)
+
+example_data <- example_data %>%
+  mutate(pred = predictions$pred)
+```
+
+We saw earlier that there weren't many houses with IR2 or IR3 lot shapes, so I'll focus on interpreting IR1 and Reg.  These predictions will be more reliable.  The predictions are quite noisy, so I'm using gf_smooth instead of gf_line or gf_point.
+```{r}
+example_data %>%
+  filter(Lot_Shape %in% c("IR1", "Reg")) %>%
+  gf_smooth(pred ~ Year_Built, color =~ Lot_Shape)
+```
+

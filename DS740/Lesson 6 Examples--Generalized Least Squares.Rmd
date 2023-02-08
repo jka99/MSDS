@@ -1,0 +1,170 @@
+---
+title: "Lesson 6 Examples--Generalized Least Squares"
+author: "Abra Brisbin"
+date: "7/19/2021"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, message = FALSE}
+library(MASS)
+library(nlme)
+library(dplyr)
+library(ggformula)
+library(readr)
+```
+
+## Compound symmetry:  State sales example
+```{r}
+
+set.seed(60) 
+SigmaWI = matrix(rep(.7,20*20),nr=20)
+SigmaCA = matrix(rep(.7,20*20),nr=20)
+diag(SigmaWI) = 1
+diag(SigmaCA) = 1
+WItime = runif(20, 5, 40)
+WIspent = .5*WItime + 5 + mvrnorm(1, rep(0,20), SigmaWI) # generate 1 random vector of 20 noise terms
+CAtime = runif(20, 5, 40)
+CAspent = .5*CAtime + 5 + mvrnorm(1, rep(0,20), SigmaCA)
+
+state_sales = data.frame(time = c(WItime, CAtime), spent = c(WIspent, CAspent), state = rep(c("WI", "CA"), each = 20))
+
+
+state_sales %>%
+  gf_point(spent ~ time, color =~ state, pch =~ state)
+
+```
+```{r}
+fit_state = gls(spent ~ time, 
+                correlation = corCompSymm(form = ~1 | state), 
+                data = state_sales)
+
+```
+
+```{r}
+summary(fit_state)
+```
+```{r}
+getVarCov(fit_state)
+```
+
+### Last year
+```{r}
+
+set.seed(64) 
+SigmaWI = matrix(rep(.7,20*20),nr=20)
+SigmaCA = matrix(rep(.7,20*20),nr=20)
+diag(SigmaWI) = 1
+diag(SigmaCA) = 1
+WItime = runif(20, 5, 40)
+WIspent = .5*WItime + 5 + mvrnorm(1, rep(0,20), SigmaWI) # generate 1 random vector of 20 noise terms
+CAtime = runif(20, 5, 40)
+CAspent = .5*CAtime + 5 + mvrnorm(1, rep(0,20), SigmaCA)
+
+state_sales = data.frame(time = c(WItime, CAtime), spent = c(WIspent, CAspent), state = rep(c("WI", "CA"), each = 20))
+
+
+state_sales %>%
+  gf_point(spent ~ time, color =~ state, pch =~ state)
+
+```
+
+## Autocorrelation:  Stock prices
+```{r}
+stock = read_csv("stock_2016.csv")
+```
+
+```{r}
+stock %>%
+  filter(Company == "Apple") %>%
+  gf_point(ClosingPrice ~ TradingDay)
+```
+
+```{r}
+fit_stock = lm(ClosingPrice ~ logVolume + Company,
+               data = stock)
+par(mfrow = c(2,2))
+plot(fit_stock)
+```
+
+```{r}
+stock[c(146,198,247), ]
+```
+### Visualizing Autocorrelation
+```{r}
+stock_Google <- stock %>%
+  mutate(resid = fit_stock$residuals) %>%
+  filter(Company == "Google")
+
+```
+
+```{r}
+stock_Google <- stock_Google %>%
+  mutate(prev_resid = lag(resid))
+```
+
+```{r}
+stock_Google %>%
+  gf_point(resid ~ prev_resid)
+```
+
+```{r}
+example_points <- stock_Google %>%
+  slice(c(17,18))
+
+stock_Google %>%
+  slice(c(-17, -18)) %>%
+  gf_point(resid ~ prev_resid) %>%
+  gf_point(resid ~ prev_resid, data = example_points, 
+           color =~ factor(TradingDay), pch =~ factor(TradingDay),
+           size = 2.5)
+```
+
+```{r}
+cor(stock_Google$resid, stock_Google$prev_resid,
+    use = "pairwise.complete.obs")
+```
+
+```{r}
+acf_results = acf(stock_Google$resid, ci.type = "ma")
+acf_results[1] # lag-1 autocorrelation
+```
+
+### Autoregressive Model in R
+```{r}
+fit_stock2 = gls(ClosingPrice ~ logVolume + Company, data = stock,
+                 correlation = corAR1(form = ~1 | Company))
+summary(fit_stock2)
+```
+
+```{r}
+plot(fit_stock2)
+```
+```{r}
+fit_stock_uncorr = gls(ClosingPrice ~ logVolume + Company, data = stock)
+fit_stock_uncorr
+```
+```{r}
+AIC(fit_stock, fit_stock_uncorr)
+```
+```{r}
+AIC(fit_stock2, fit_stock_uncorr)
+```
+
+### Changing how time is measured
+```{r}
+stock[1:6, ]
+```
+
+```{r}
+fit_stock3 = gls(ClosingPrice ~ logVolume + Company, data = stock,
+                 correlation = corAR1(form = ~DayOfYear | Company))
+summary(fit_stock3)
+```
+
+```{r}
+AIC(fit_stock2, fit_stock3)
+```

@@ -1,0 +1,83 @@
+```{r}
+library(MASS)
+library(dplyr)
+library(ggplot2)
+library(FNN)
+```
+
+```{r}
+
+```
+
+```{r}
+set.seed(100)
+neighborhoods = c(rep(1, 350), rep(2, 156))
+random_groups = sample(neighborhoods, 506)
+in_train = (random_groups == 1)
+
+x_train <- Boston %>%
+  dplyr::select(c(age, rad)) %>%
+  filter(in_train)
+
+x_test <- Boston %>%
+  dplyr::select(c(age, rad)) %>%
+  filter(!in_train)
+```
+
+```{r}
+# x_train = scale(x_train)
+# attr(x_train, "scaled:center")
+#attr(x_train, "scaled:scale")
+
+#x_test = scale(x_test, center = attr(x_train, "scaled:center"), scale = attr(x_train, "scaled:scale"))
+```
+```{r}
+x_train = scale(x_train)
+x_test = scale(x_test, center = attr(x_train, "scaled:center"), 
+               scale = attr(x_train, "scaled:scale"))
+```
+
+```{r}
+predictions = knn.reg(train = x_train, 
+                      test  = x_test,
+                      y = Boston$crim[in_train],
+                      k = 25)
+MSE = mean( (predictions$pred - Boston$crim[!in_train])^2 )
+MSE
+```
+
+```{r}
+age_to_check = seq(20, 100, by = 1)
+rad_to_check = c(seq(1, 8, by = 1), 24)
+example_data = expand.grid(age_to_check, 
+                           rad_to_check)
+example_data <- example_data %>%
+  rename(age = Var1,
+         rad = Var2)
+
+x_example = scale(example_data, 
+                    center = attr(x_train, "scaled:center"),
+                    scale = attr(x_train, "scaled:scale"))
+predictions = knn.reg(train = x_train, 
+                  test  = x_example,
+                  y = Boston$crim[in_train],
+                  k = 25)
+```
+
+```{r}
+example_data <- example_data %>%
+  mutate(pred = predictions$pred)
+example_data %>%
+  gf_point(rad ~ age, color =~ pred)
+```
+
+```{r}
+example_data %>%
+  filter(rad %in% c(1,8,24)) %>%
+  gf_line(pred ~ age, color =~ factor(rad))
+```
+
+
+
+
+

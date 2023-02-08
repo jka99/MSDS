@@ -1,0 +1,269 @@
+---
+title: "Homework 9 R Markdown"
+author: "Your name here"
+date: '`r Sys.Date()`'
+output:
+  word_document:
+    fig_height: 4
+    fig_width: 4.5
+  pdf_document:
+    fig_height: 4
+    fig_width: 4.5
+  html_document:
+    fig_height: 4
+    fig_width: 4.5
+---
+
+
+```{r, setup, include=FALSE}
+# Some customization.  You can alter or delete as desired (if you know what you are doing).
+knitr::opts_chunk$set(
+  echo = TRUE,
+  tidy=FALSE,     # display code as typed
+  size="small")   # slightly smaller font for code
+```
+
+Load packages here.
+```{r, message=FALSE}
+
+```
+
+#### Intellectual Property:
+These problems are the intellectual property of the instructors and may not be reproduced outside of this course.
+
+
+## Problem 1: Using Support Vectors for Classification
+
+In this problem, you will use a support vector classifier to categorize different species of oak trees to different regions (California vs. the Atlantic coast). 
+
+**Data Set**: Download the *Oak_log.csv* data set and load it into R.
+```{r}
+
+```
+
+### Question 1 (2 points):
+
+Make new columns in the data containing the standardized log(acorn size) and standardized log(range).  
+
+- Note that logSize refers to the log(acorn size).
+
+Make a scatterplot that shows the region, standardized log(acorn size), and standardized log(range) all in the same plot.  Include a legend.  
+
+Use *Insert -> Image* to upload your plot to this question on Canvas.
+
+**Graph Answer**:
+
+
+```{r}
+
+```
+
+
+
+### Question 2 (2 points):
+
+Which method do you expect will be better for categorizing the regions of species of oak trees: A support vector classifier or logistic regression? Explain.
+
+**Text Answer**: 
+
+
+
+
+### Question 3 (2 points):
+
+Use `caret` to build a support vector classifier (a SVM with a linear kernel) to categorize the trees' regions based on their logSize and logRange. Use the `preProcess` argument to standardize the predictors. Test the following values of cost: .001, .01, .1, 1, 5, 10, 100. Because of this data set's small size, use leave-one-out cross-validation.
+Enter your R code below. 
+
+**Code Answer**: 
+```{r, question_3}
+
+
+```
+
+
+
+### Question 4 (1 point):
+What cost value gave the optimal model?
+
+**Multiple choice Answer (AUTOGRADED on Canvas)**:  One of .001, .01, .1, 1, 5, 10, 100.
+
+
+### Question 5 (2 points):
+
+Predict the regions for the entire data set using the final model from `caret`, and make a confusion matrix.  How many Atlantic species are incorrectly classified as California species?
+
+**Numeric Answer (AUTOGRADED on Canvas)**:  
+```{r}
+
+```
+
+### Question 6 (1 point):
+
+How many California species are incorrectly classified as Atlantic species?
+
+**Numeric Answer (AUTOGRADED on Canvas)**:  
+
+
+
+
+### Question 7 (3 points):
+
+Make a graph showing the data points (similar to question 1), optimal hyperplane (line), and its margins.  Include a legend.
+
+- Use different colors and/or plotting characters to show the Regions of the points.
+- You may use either the standardized or the unstandardized log(acorn size) and log(range).
+
+Use *Insert -> Image* to upload your plot to this question on Canvas.
+
+**Graph Answer**: 
+```{r}
+
+```
+
+
+
+### Question 8 (4 points)
+In question 3, we used `caret` to perform cross-validation for model selection (picking the best value of the cost parameter).  In this question, we will use a *for* loop wrapper to perform a second layer of cross-validation.  This will allow us to honestly assess the accuracy of our model-selection process.
+
+- Set the random seed to 9.
+- Create a vector to store the predicted regions (it should have length = the number of rows in the data set).
+- Create vectors `groups` and `cv_groups` to perform 10-fold CV (like we did before learning about `caret`).
+- Create a *for* loop to iterate through the folds of the outer layer of CV.  Inside the *for* loop:
+  - Create the variables `groupii`, `train_set`, and `test_set`, like we did for CV before learning about `caret`.
+  - Use `caret` to perform an inner layer of LOOCV.  `caret` should fit a support vector classifier and choose among costs of .001, .01, .1, 1, 5, 10, 100.  This code can be the same as you used in question 3, **except that it should use the training set from the outer layer of CV** instead of the entire data set.
+  - Use the model from `caret` to predict the regions of the data in the test set from the outer layer of CV.
+  
+Enter your R code below. 
+
+**Code Answer**: 
+```{r, question_8}
+
+```
+
+
+
+
+### Question 9 (1 point)
+Make a confusion matrix of the stored predictions from the double cross-validation.  What is the cross-validation accuracy of the model selection process?  Enter your answer to 4 decimal places.  
+
+**Numeric Answer (AUTOGRADED on Canvas)**:  
+```{r}
+
+```
+
+
+
+
+## Problem 2:  Using Support Vector Machines for Classification
+
+In this problem, you will use a support vector machine with a radial kernel to classify the gas mileage of cars.  
+**Data Set**: Load the **Auto** data set, which is in the **ISLR** library.
+
+
+
+### Question 10 (2 points):
+
+- **Tell R to treat the origin variable as a factor.** 
+- Create a binary variable that equals "high" for cars with gas mileage (`mpg`) greater than or equal to the median and "low" for cars with gas mileage below the median.  Tell R to treat it as a factor.  
+- Remove the `name` variable and the continuous `mpg` variable from the data frame.
+ 
+Enter your R code below. 
+
+**Code Answer**: 
+```{r}
+
+```
+
+
+
+### Question 11 (3 points):
+
+Set the random seed to 9.  Use `caret` to perform 10-fold cross-validation to compare different values of cost and sigma for a radial support vector machine. Use the same values of cost as listed previously: .001, .01, .1, 1, 5, 10, 100. Use sigma = 0.5, 1, 2, 3, and 4. 
+
+- Model the binary gas mileage variable as a function of all the other variables that are in Auto after question 10.
+- Ask `caret` to model the probability that each point belongs to each category.  (For purposes of this homework, it's OK if the model fails to converge.)
+
+Enter your R code below.  
+
+
+**Code Answer**: 
+```{r, results = "hide", question_11}
+
+
+```
+
+
+
+### Questions 12-13  (2 points, 1 each):
+
+Which combination of parameters gave the highest cross-validation accuracy?  
+```{r}
+
+```
+
+***(Numeric answers, AUTOGRADED on Canvas)**
+
+Cost:    
+Sigma:   
+
+
+
+### Question 14 (1 point):
+
+What was the cross-validation accuracy of the best model?  Enter your answer to 4 decimal places.  
+```{r}
+
+```
+
+**Numeric Answer (AUTOGRADED on Canvas)**:  
+
+
+
+
+### Question 15 (2 points):
+
+Use the best model to predict the probability that the following car would have **high** gas mileage:  
+**1977 Chrysler Sunbeam**  
+**Cylinders**: 4  
+**Engine displacement**:  132.5 cubic inches  
+**Horsepower**:  155  
+**Weight**:  2,910 lbs  
+**Acceleration**:  8.3 seconds  
+**Origin**:  American (1)  
+
+Enter your answer to 4 decimal places.  
+
+**Numeric Answer (AUTOGRADED on Canvas)**:  
+```{r}
+
+```
+
+
+
+### Question 16 (2 points)
+Make a grid of example data points with 
+
+* weight = seq(min(Auto$weight), max(Auto$weight), length = 100)
+* cylinders = 4
+* origin = 1
+* all other predictors set equal to their medians.
+
+Predict the probability of having high gas mileage for each data point in the grid.  Include your R code below.
+
+**Code Answer**: 
+```{r}
+
+```
+
+
+### Question 17 (2 points)
+Make a graph of the predicted probability of high gas mileage as a function of weight.  Include a title or caption on the graph that summarizes the relationship between weight and predicted probability of high gas mileage.
+
+Use *Insert -> Image* to upload your plot to this question on Canvas.
+
+**Graph Answer**: 
+```{r}
+
+```
+
+

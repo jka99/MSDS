@@ -1,0 +1,169 @@
+---
+title: "Lesson 7 Examples--Random Forests"
+author: "Abra Brisbin"
+date: "7/3/2021"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, message = FALSE}
+library(randomForest)
+library(ggformula)
+library(dplyr)
+```
+
+# Using bagging to predict whether an object is rock or metal based on its sonar reading
+I'm reading the data using `read.csv` because in my experience, using `read_csv` can cause the `partialPlot` function to throw an error.
+```{r}
+sonar = read.csv("Sonar_rock_metal.csv", header = FALSE)
+```
+
+```{r}
+set.seed(700)
+
+sonar_bag = randomForest(factor(V61) ~ ., data = sonar,
+                         mtry = 60, importance = TRUE)
+  # Could use subset = in_train
+  # or data = sonar[in_train, ]
+sonar_bag
+
+```
+
+```{r}
+
+plot(sonar_bag)
+legend("topright", 
+       colnames(sonar_bag$err.rate),
+       col = 1:3, lty = 1:3)
+
+```
+
+When there are many predictor variables, printing the variable importance graph to pdf can help make it more readable.
+```{r}
+
+importance(sonar_bag)
+
+#pdf("Sonar_bag.pdf")
+varImpPlot(sonar_bag)
+#dev.off()
+```
+```{r}
+
+partialPlot(sonar_bag, pred.data = sonar,
+            x.var = V11, which.class = "M")
+
+```
+```{r}
+
+
+gf_violin(V11 ~ V61, data = sonar,
+          draw_quantiles = c(.25, .5, .75))
+
+```
+
+## Joint effect:  Holding other variables constant
+This would work, but I don't want to type out all 58 predictors:
+```{r, eval = FALSE}
+
+example_data <- sonar %>%
+  mutate(V1 = median(V1),
+         V2 = median(V2),
+         V3 = median(V3),
+         ...
+         V60 = median(V60))
+
+```
+
+More efficient to type:
+```{r}
+
+example_data <- sonar %>%
+  mutate(across(c(-V11, -V12, -V61), median))
+
+```
+
+```{r}
+
+example_data <- example_data %>%
+  mutate(pred_P_metal = predict(sonar_bag, example_data, type = "prob")[,1])
+
+example_data %>%
+  gf_point(pred_P_metal ~ V11, color =~ V12) %>%
+  gf_refine(scale_color_gradient(low = "darkblue", high = "red"))
+
+```
+
+# Random forests
+```{r}
+
+sonar_rf = randomForest(factor(V61) ~ ., data = sonar,
+                         mtry = 8, importance = TRUE)
+
+```
+
+# Random forests and bagging in caret
+```{r, message = FALSE}
+library(caret)
+```
+
+There are $p=60$ predictor variables, so $\sqrt{p} = 7.75$.  We'll test values of `mtry` around this value:  6, 7, 8, 9, 10.  If the optimal value of `mtry` turns out to be 6 or 10, we'll expand the range of values we're testing.
+
+We'll also test classic bagging, using `mtry` $=60$.
+```{r}
+
+set.seed(88)
+data_used = sonar
+
+ctrl = trainControl(method = "cv", number = 5)
+sonar_caret = train(V61 ~ ., 
+             data = data_used,
+             method = "rf",
+             tuneGrid = expand.grid(mtry = c(6, 7, 8, 9, 10, 60)),
+             trControl = ctrl)
+
+sonar_caret
+
+```
+
+Checking the number of trees:
+```{r}
+
+plot(sonar_caret$finalModel)
+legend("topright", 
+       colnames(sonar_caret$finalModel$err.rate), 
+       col = 1:3, lty = 1:3)
+
+```
+The graph levels out, so 500 trees is adequate.
+
+Variable importance:
+```{r}
+importance(sonar_caret$finalModel)
+varImpPlot(sonar_caret$finalModel)
+varImp(sonar_caret)
+```
+
+
+```{r}
+
+partialPlot(sonar_caret$finalModel, x.var = V11, 
+            pred.data = as.data.frame(sonar), 
+            which.class = "M")
+
+```
+
+The `partialPlot` function in the `randomForest` package has problems with `caret` models when there are categorical predictors.  I wrote a variation of this function that doesn't have this problem.  As a side benefit, it uses `ggformula` to make the graph instead of the base R graphics package.
+
+To use this version, save the file `gf_partialPlot.R` in your working directory (by default, the folder where this .Rmd is saved).  Then run the following code cell:
+```{r}
+
+source("gf_partialPlot.R")
+gf_partialPlot(sonar_caret, sonar, x.var = "V11", which.class = "M") %>%
+  gf_labs(caption = "We can pipe the graph into other functions, like in other ggformula graphs.")
+
+```
+
+

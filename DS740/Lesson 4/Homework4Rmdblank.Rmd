@@ -1,0 +1,455 @@
+---
+title: "Homework 4 R markdown"
+author: "(your name)"
+date: '`r Sys.Date()`'
+output:
+  word_document:
+    fig_height: 3
+    fig_width: 5
+  html_document:
+    fig_height: 3
+    fig_width: 5
+  pdf_document:
+    fig_height: 3
+    fig_width: 5
+---
+
+```{r, setup, include=FALSE}
+require(mosaic)   
+# Some customization.  You can alter or delete as desired (if you know what you are doing).
+# trellis.par.set(theme=theme.mosaic()) # change default color scheme for lattice
+knitr::opts_chunk$set(
+  tidy=FALSE,     # display code as typed
+  size="small")   # slightly smaller font for code
+```
+
+#### **Intellectual Property:**
+These problems are the intellectual property of the instructors and may not be reproduced outside of this course.
+
+**.Rmd output format**:  The setting in this markdown document is `word_document`, since it is the output format listed at the top of the options (see lines 6-8 in .Rmd).  However, you have options for `word_document` or `pdf_document` - you may choose the output format (for your reading convenience, since the output is not directly submitted).
+
+***  
+
+###########################################
+## Problem 1: Use LDA with One Predictor ##
+###########################################
+
+In this problem, you will use Linear Discriminant Analysis to predict *Domestic* by *mpg* in the analysis of cars. 
+
+**Data**: Use the **Auto** data set from the ***ISLR*** package.   We will use several of the continuous variables to classify vehicles into levels of a new variable *Domestic* (according to values of *origin*).
+
+```{r echo=FALSE}
+library(pROC)
+library(MASS)
+
+# Load additional packages here 
+# for methods
+
+# read in data and/or view
+library(ISLR)
+data(Auto)
+```
+
+### Question 1 **(1 point)**:
+
+Define a new variable called Domestic to have the value 1 when the car is domestic (*origin* = 1, for American) and the value 0 when the car is foreign (*origin* = 2 or 3, for European or Japanese, respectively). Tabulate the results, and report the count of domestic (*Domestic*=1) vehicles.
+
+Total number of domestic vehicles =
+
+**Code for Question 1**
+```{r}
+NewAuto <- Auto %>%
+  mutate(Domestic = as.numeric(origin == 1))  # given
+# answer for question 1
+
+```
+
+**Numeric Answer (AUTOGRADED)**:
+
+
+
+### Question 2 **(2 points)**:
+
+Make side-by-side boxplots of the *mpg*, split into two groups by *Domestic*. (Save the plot as an image, and) Use the "Embed Image" button to upload your plot in the Canvas homework question.
+
+*Suggestion*: you may wish to use `as.factor(Domestic)` to make *Domestic* compatible with your chosen plotting function.
+
+```{r echo=FALSE,fig.width=6, fig.height=4}
+
+```
+
+**Plot upload:**
+
+
+**Code for questions 3-4**
+```{r echo=TRUE}
+
+```
+
+
+### Question 3 **(1 point)**:
+
+Compute and enter the mean *mpg* for domestic vehicles =
+
+(answer to *one* decimal place)
+
+**Numeric Answer (AUTOGRADED)**:
+
+### Question 4 **(1 point)**:
+
+Compute and enter the mean *mpg* for foreign vehicles =
+
+(answer to *one* decimal place)
+
+**Numeric Answer (AUTOGRADED)**:
+
+***
+
+### Question 5 **(2 points)**:
+
+Normal probability plots of mpg for the two groups are shown in the image, for each level of Domestic. Using these, along with the boxplot you produced earlier, discuss whether the two assumptions for running an LDA are reasonably met. 
+
+  
+```{r echo=FALSE, fig.width=6, fig.height=3}
+#included portion
+QQlabels = c("0" = "Domestic=0","1" = "Domestic=1")
+ggplot(data = NewAuto, aes(sample=mpg)) + 
+    stat_qq() + 
+    stat_qqline() + 
+    facet_grid(.~Domestic,labeller=labeller(Domestic=QQlabels))
+```
+
+
+**Text Answer**
+
+***
+
+### Question 6 **(2 points)**:
+
+Fit the linear discriminant analysis, using the predictor *mpg* to predict the response *Domestic*. 
+
+Predict the classifications from the LDA fit and tabulate the variable *Domestic* with the LDA classification. 
+
+Enter your code below:
+
+**Code Answer**
+
+```{r echo=TRUE}
+# Question 6 
+
+# Question 7-8
+
+```
+
+
+
+### Question 7 **(1 point)**:
+
+For this LDA classification of *Domestic*, compute and enter the **sensitivity** =
+
+(report as proportion, between 0 and 1, out to *three* decimal places)
+
+**Numeric Answer (AUTOGRADED)**:
+
+
+### Question 8 **(1 point)**:
+
+For this LDA classification of *Domestic*, compute and enter the **specificity** =
+
+(report as proportion, between 0 and 1, out to *three* decimal places)
+
+**Numeric Answer (AUTOGRADED)**:
+
+***
+
+### Question 9 **(1 point)**:
+
+There are several other possible predictors of *Domestic.*  Use plots to explore which of the below variables are related to *Domestic*, and select the **one** variable that appears most discriminating between foreign and domestic vehicles. 
+
+```{r, eval=F}
+
+```
+
+**Multiple-choice Answer (AUTOGRADED)**:
+
+one of *mpg*, *displacement*, *horsepower*, or *acceleration*
+
+
+
+### Question 10 **(2 points)**:
+
+Would you prefer to use LDA or QDA when using the variable selected in the previous question to predict *Domestic*? Explain your reasoning, with particular reference to differences in assumptions between the two methods.
+
+**Text Answer**: 
+
+
+### Question 11 **(2 points)**:
+
+Based on your answers to the previous two questions, fit the discriminant analysis method you selected, using your selected variable to predict the response *Domestic*. 
+
+Produce a ROC curve for this fitted model. Use the "Embed Image" button to upload your plot  in the Canvas homework question.
+
+**Plot upload:**
+
+```{r,fig.width=4, fig.height=4}
+
+```
+
+
+### Question 12 **(2 points)**:
+
+The ROC curve and R output for using *mpg* to predict *Domestic* is shown in the image. Discuss which variable (*mpg* or the variable you selected previously) that you would use  to predict *Domestic* and **why**.
+
+```{r, echo=F,fig.width=4, fig.height=4}
+## ROC curve for LDA with mpg 
+ldaprob.mpg = predict(lda(Domestic~mpg, data=NewAuto),data=NewAuto)$posterior[,2]
+lda.roc.mpg <- roc(response=NewAuto$Domestic, predictor=ldaprob.mpg)
+plot.roc(lda.roc.mpg,main="ROC for predictor mpg"); auc(lda.roc.mpg)
+```
+
+**Text Answer**:  
+
+***
+***
+
+
+
+########################################################
+## Problem 2:  Use LDA & QDA with Multiple Predictors ##
+########################################################
+
+In this problem, you will use Linear and Quadratic Discriminant Analysis to predict the factor response *origin* by using predictors *mpg*, *cylinders*, *displacement*, *horsepower*, and *weight*. 
+
+Data: Use the **Auto** data set from the **ISLR** package.  We will use several of the continuous variables to classify vehicles into levels of *origin*.
+
+### Question 13 **(2 points)**:
+
+Make the variable *origin* into a factor.  
+
+Then, produce a scatterplot of *mpg* and *displacement*, marked by *origin*, along with an appropriate legend.  Use the "Embed Image" button  to upload your plot in the Canvas homework question.
+
+**Plot upload:**
+
+```{r,fig.width=5,fig.height=4}
+
+
+```
+
+***
+
+### Questions 14-16 **(3 points, 1 each)**:
+
+Fit the linear discriminant analysis, using the predictors *mpg*, *cylinders*, *displacement*, *horsepower*, and *weight* to predict the response *origin.* 
+
+Predict the classifications from the **LDA** fit. Cross-tabulate the variable *origin* with the LDA classification, and report the number of **correctly** classified vehicles, for each of American, European, and Japanese. You may find ``help(Auto)`` useful for the meaning of levels of *origin.*
+
+**Note**: overall error rate is 0.2551.   
+
+Number of American vehicles that are correctly classified (from **LDA**) =  
+Number of European vehicles that are correctly classified (from **LDA**) =  
+Number of Japanese vehicles that are correctly classified (from **LDA**) =  
+
+```{r}
+
+```
+
+**Numeric Answers (AUTOGRADED)**:
+
+
+
+### Questions 17-19 **(3 points, 1 each)**:
+
+Fit the quadratic discriminant analysis, using the predictors *mpg*, *cylinders*, *displacement*, *horsepower*, and *weight* to predict the response *origin.* 
+
+Predict the classifications from the **QDA** fit. Cross-tabulate the variable *origin* with the QDA classification, and report the number of **correctly** classified vehicles,  for each of American, European, and Japanese. 
+
+**Note**: overall error rate is 0.2245.    
+
+Number of American vehicles that are correctly classified (from **QDA**) =  
+Number of European vehicles that are correctly classified (from **QDA**) =  
+Number of Japanese vehicles that are correctly classified (from **QDA**) =  
+
+```{r}
+
+```
+
+**Numeric Answers (AUTOGRADED)**:
+
+
+
+
+### Question 20 **(2 points)**:
+
+Describe how the predictive abilities (as assessed on the original data) compare between LDA and QDA fits. 
+
+Discuss why these results seem reasonable, given plots of various predictors marked by *origin* (such as the one you made at the beginning of this problem).
+
+**Text Answer**: 
+
+***
+
+### Question 21 **(1 point)**:
+
+Using the **QDA** fit, for a vehicle which has:  
+
+   * 20 *mpg*,  
+   * 8 *cylinders*,  
+   * *displacement* of 320 $in^3$,  
+   * 280 *horsepower*, and  
+   * *weight* of 3600 pounds,  
+
+predict whether *origin* of the vehicle is American, European, or Japanese.
+
+**Multiple-choice Answer (AUTOGRADED)**:  American, European, or Japanese
+
+```{r}
+
+
+```
+
+***
+***
+
+
+#################################################
+## Problem 3: Model Selection with LDA and QDA ##
+#################################################
+
+While we can make some sort of model comparison using the full dataset for both fitting and selection, it is not entirely valid since we are not using truly new data.  Thus, we will use cross-validation to compare models.  We will consider two LDA and two QDA models to predict the response origin. 
+
+**Data**: Use the **Auto** data set from the ``ISLR`` package.  We will use several of the continuous variables to classify vehicles into levels of *origin*.
+
+**Information**  
+Model 1:  LDA using the predictor *displacement.*  
+Model 2:  LDA using the predictors *mpg*, *cylinders*, *displacement*, *horsepower*, and *weight.*  
+Model 3:  QDA using the predictor *displacement.*  
+Model 4:  QDA using the predictors *mpg*, *cylinders*, *displacement*, *horsepower*, and *weight.*  
+
+### Question 22 **(3 points)**:
+
+Use the below code to set R’s seed to 4 and define **cvgroups** (random groups for the cross-validation) using the ``sample()`` function.  
+
+With **cvgroups** as just defined, use 10-fold cross-validation method to calculate $CV_{(10)}$ for each of Models 1-4. Include all your code (that is, the full loop process) for  computing honest predictions and the $CV_{(10)}$ measure for the four models.
+
+```{r}
+# provided code
+nfolds = 10; n=392
+groups = rep(1:nfolds,length=n)
+set.seed(4)
+cvgroups = sample(groups,n); table(cvgroups)
+```
+
+**Code Answer**:
+
+```{r}
+# code for question 22
+
+
+```
+
+
+
+### Question 23 **(1 point)**:
+
+Enter the $CV_{(10)}$ for Model **1**: $CV_{(10)}$  =
+
+(report to *three* decimal places)
+
+**Numeric Answer (AUTOGRADED)**:
+
+
+### Question 24 **(1 point)**:
+
+Enter the $CV_{(10)}$ for Model **2**: $CV_{(10)}$  =
+
+(report to *three* decimal places)
+
+**Numeric Answer (AUTOGRADED)**:  
+
+
+### Question 25 **(1 point)**:  
+
+Even though Model 2 has more predictors (and thus more parameters to estimate), we would prefer Model 2 (compared to Model 1) since the value of $CV_{(10)}$ for Model 2 is:
+
+**Multiple-choice Answer (AUTOGRADED)**:  one of 
+
+lower than the $CV_{(10)}$ for Model 1,
+
+about the same as the $CV_{(10)}$ for Model 1, or
+
+higher than the $CV_{(10)}$ for Model 1
+
+
+***
+
+
+### Now, we compare Models 2 and 4.  Determine the number of parameters that must be estimated for each model.  
+
+```{r}
+
+```
+
+### Question 26 **(1 point)**:
+
+Model **2**: # of parameters =
+
+**Numeric Answer (AUTOGRADED)**:
+
+### Question 27 **(1 point)**:
+
+Model **4**: # of parameters =
+
+**Numeric Answer (AUTOGRADED)**:
+
+### Question 28 **(2 points)**:
+
+Identify which you would prefer between model 2 (LDA) and model 4 (QDA).  Discuss  the $CV_{(10)}$ values in light of:
+
+   * the number of parameters that need to be estimated for each model and
+   * a comparison of the underlying assumptions about predictor variability for each model.
+
+**Text Answer**: 
+
+
+
+***
+***
+
+#####################################
+## Problem 4: Checking Assumptions ##
+#####################################
+
+We applied the LDA and QDA models, which are potentially appropriate models for the qualitative response variable being used in this homework.  Let’s consider Models 2 and 4 from the previous Problem:
+
+Model 2:  LDA using the predictors *mpg*, *cylinders*, *displacement*, *horsepower*, and *weight.* 
+
+Model 4:  QDA using the predictors *mpg*, *cylinders*, *displacement*, *horsepower*, and *weight.* 
+
+Based on the previously computed CV(10) measures, we appear to only be getting a moderate fit at best.
+
+### Question 29 **(2 points)**:
+
+When we use a model, we want it to fit with the behavior of the data; the mathematical theory must fit reasonably well with reality. This is checked by evaluating whether assumptions for the model are met.  
+
+For the models (LDA and QDA) using all five predictors, check the assumption of multivariate normality for the three sets of predictor variables (split by *origin*).  Enter your R commands below. 
+
+**Code Answer**:
+
+```{r eval=F}
+
+```
+
+
+### Question 30 **(2 points)**:
+
+Explain what your observations from the previous question tell you about the appropriateness of using discriminant analysis models with these five predictors for predicting *origin*.
+
+**Text Answer**: 
+
+### Question 31 **(2 points)**:
+
+Provide an alternative method, suited to the qualitative response *origin*, that could be used to fit the above model. You may provide explanation / reasoning to support your choice.
+
+**Text Answer**: 
+
+###############################################################

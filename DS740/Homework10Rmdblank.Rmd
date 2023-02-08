@@ -1,0 +1,286 @@
+---
+title: "Homework 10 R markdown"
+author: "(Your name here)"
+date: '`r Sys.Date()`'
+output: word_document
+---
+
+
+```{r, setup, include=FALSE}
+#require(mosaic)   # Load additional packages here 
+
+# Some customization.  You can alter or delete as desired (if you know what you are doing).
+#trellis.par.set(theme=theme.mosaic()) # change default color scheme for lattice
+knitr::opts_chunk$set(
+  tidy=FALSE,     # display code as typed
+  size="small")   # slightly smaller font for code
+```
+
+#### Intellectual Property:  
+These problems are the intellectual property of the instructors and may not be reproduced outside of this course.
+
+Load additional packages here.
+```{r, message=FALSE}
+
+```
+
+## Problem 1: Modeling with an Artificial Neural Network
+
+
+In this problem, you will use an artificial neural network to model the type of orange juice that customers buy.  
+
+**Important**:  In our experience, if you use the correct code for this problem, your answers will be consistent with the autograder, regardless of your computer's processor.  If your answers do not match the autograder, please check your code first.  If it still doesn't work, make a private post on Piazza explaining where the discrepancy is.  Include your complete code for the problem in the post.
+
+
+
+
+### Question 1 **(3 points)**:
+
+
+**Data Set**: Load the **OJ** data set, which is in the **ISLR** library.  Set the random seed to 10.
+
+Use 5-fold CV with `caret` to build an artificial neural network with 1 hidden node and no weight decay, to model Purchase as a function of LoyalCH, SalePriceMM, and PriceDiff.  Tell `caret` to center and scale the data.
+
+Enter your R code below. 
+
+
+**Code Answer**: 
+```{r, echo=TRUE}
+
+```
+
+
+
+
+### Question 2 **(2 points)**:
+
+
+Make a plot of your neural network.  You do not need to label the edges with their weights. Use **Insert** -> **Image** to upload your graph to this question on Canvas.
+
+**Graph Answer**: 
+
+```{r,echo=FALSE}
+
+```
+
+
+
+
+### Question 3 **(3 points)**:
+
+Fill in the blanks to interpret the graph from the previous problem:  
+
+If we hold SalePriceMM and PriceDiff constant and increase LoyalCH, the output of the hidden node (increases/decreases).  This causes the predicted probability of Purchase to (increase/decrease).  Therefore, it makes sense that the predicted response value is the probability of purchasing (Minute Maid/Citrus Hill).
+
+**Note**: It may help to review the data dictionary using **?OJ**. 
+
+
+**Fill-in-the-blank Answer (AUTOGRADED on Canvas)**
+
+
+
+
+### Question 4 **(1 point)**:
+
+What is the predicted probability that the first person in the data set will purchase Minute Maid? Enter your answer to 3 decimal places.
+
+**Numeric Answer (AUTOGRADED on Canvas)**:  
+```{r,echo=FALSE}
+
+```
+
+
+
+
+### Question 5 **(2 points)**:
+
+
+If we use a probability threshold of .5 to classify predicted purchases, what is the classification error rate for this data set? Enter your answer to 4 digits after the decimal place.
+
+**Numeric Answer (AUTOGRADED on Canvas)**:  
+```{r,echo=FALSE}
+
+```
+
+
+
+
+### Question 6 **(1 point)**:
+
+
+Suppose we classify predicted purchases as "MM"" if the probability of purchasing Minute Maid is > .9, as "CH" if the probability of purchasing Minute Maid is < .1, and NA otherwise. What is the classification error rate among purchases for which we make a (non-NA) prediction? Enter your answer to 3 decimal places.
+
+
+**Numeric Answer (AUTOGRADED on Canvas)**:  
+```{r,echo=FALSE}
+
+```
+
+
+### Question 7 **(3 points)**:
+
+
+Write the R code you used to answer the previous question. 
+
+**Text Answer**: 
+
+
+
+### Question 8 **(2 points)**:
+
+
+If we use a probability threshold of .9 as in the previous two questions, for how many purchases do we fail to make a prediction?  In other words, for how many purchases is the prediction *NA*?
+
+**Numeric Answer (AUTOGRADED on Canvas)**:  
+```{r,echo=FALSE}
+
+```
+
+
+
+### Question 9 **(2 points)**:
+
+
+View the Lek profile of the model. Which of the following accurately describe the relationship among the variables? Select all that apply. 
+
+```{r}
+
+```
+
+**Multiple SELECT Answer (AUTOGRADED on Canvas)**:  
+  
+- The association between PriceDiff and Purchase is strongest for customers with low values of LoyalCH.
+- The association between SalePriceMM and Purchase is stronger when the PriceDiff is at a maximum than when PriceDiff is at a minimum.
+- LoyalCH and Purchase are negatively associated.
+- PriceDiff and Purchase are positively associated.
+
+
+
+
+## Problem 2: Using an Artificial Neural Network to Model Salaries
+
+
+In this problem, you will use an artificial neural network to model the salaries of baseball players. 
+
+**Important**:  For this problem, your answers may vary depending on your computer's processor; thus, there are no numeric autograded parts.
+
+
+### Question 10 **(3 points)**:
+
+
+**Data Set**: Load the **Hitters** data set in the **ISLR** package.
+
+Remove any rows with missing Salary data.  
+
+Create new variables as follows, adding to the data frame in the order listed:
+
+1. **League01**, which equals 0 if **League** = "A" and equals 1 if **League** = "N".   
+2. **Division01**, which equals 0 if **Division** = "E" and equals 1 if **Division** = "W".  
+3. **NewLeague01**, which equals 0 if **NewLeague** = "A" and equals 1 if **NewLeague** = "N".  
+
+*Do not* convert the new variables to factors.  *Remove* the old variables (**League**, **NewLeague**, and **Division**) from the data frame.  
+
+Enter your R code below. 
+
+**Code Answer**: 
+```{r, echo=TRUE}
+
+```
+
+
+
+### Question 11 **(4 points)**:
+
+Set the random seed equal to 10 again.  We will fit an artificial neural network with 5 hidden nodes to model **Salary** as a function of all other variables in the data set.  Use `caret` to perform 10-fold cross-validation to select the best decay rate, $\lambda$, from the set 1, 1.1, 1.2, ..., 1.9, 2.
+
+- Tell `caret` to center and scale the data.
+- Use a linear output function.
+- To ensure convergence, use `maxit = 2000`.
+
+Enter your R code below. 
+
+
+**Code Answer**: 
+```{r, echo=TRUE}
+
+
+```
+
+
+
+
+
+### Question 12 **(2 points)**:
+
+
+Make a graph of the RMSE as a function of $\lambda$. Add something to your graph (a title, a label, a line, ...) to indicate the value of $\lambda$ that optimizes the RMSE.  Use **Insert** -> **Image** to upload your graph to this question on Canvas. 
+
+- It may be helpful to refer to the `$results` component of your `caret` object. 
+
+
+**Graph Answer**: 
+
+```{r}
+
+```
+
+
+
+
+### Question 13 **(1 point)**:
+
+
+Apply Garson's algorithm to the final model from `caret`. Use **Insert** -> **Image** to upload your graph to this question on Canvas. 
+
+**Graph Answer**:
+```{r}
+
+```
+
+
+### Question 14 **(1 point)**:
+According to Garson's algorithm, which _two_ variables are most important in predicting **Salary**? 
+
+
+**Text Answer**: 
+
+
+### Question 15 **(2 points)**:
+Make a set of example points with realistic values of `Hits` and all other predictor variables held constant at their medians.  (It may be helpful to refer to your notes about random forests.)
+
+Use the final model from `caret` to predict the salary of the players in your set of example points.  Make a graph of predicted salary as a function of `Hits`.  Use **Insert** -> **Image** to upload your graph to this question on Canvas. 
+
+- This question is **not** asking for a contour plot.
+
+```{r}
+
+
+
+```
+
+
+
+### Question 16 **(3 points)**:
+- On what range of values does the relationship between `Hits` and predicted salary agree with your expectations?  
+- On what range of values does `Hits` have little effect on predicted salary?  
+- Suggest a possible explanation for why `Hits` has little effect on predicted salary in this range.  (For example, what other factors may have greater influence on salary, for players with `Hits` in this range?)
+
+If you are not familiar with baseball, it may be helpful to read the first two paragraphs of [the Wikipedia page on baseball](https://en.wikipedia.org/wiki/Baseball).
+
+**Text Answer**: 
+
+
+
+
+### Question 17 **(2 points)**:
+
+
+If your goal was to optimize the performance of this model, what would you try next? Suggest **two** ideas. 
+
+
+**Text Answer**: 
+
+
+
+
+

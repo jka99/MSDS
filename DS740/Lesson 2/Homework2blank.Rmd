@@ -1,0 +1,469 @@
+---
+title: "Homework 2 R markdown"
+author: "(your name here)"
+date: '`r Sys.Date()`'
+output:
+  word_document:
+    fig_height: 4
+    fig_width: 4.5
+  pdf_document:
+    fig_height: 4
+    fig_width: 4.5
+  html_document:
+    fig_height: 4
+    fig_width: 4.5
+---
+
+
+```{r, setup, include=FALSE}
+require(mosaic)   # Load additional packages here 
+
+# Some customization.  You can alter or delete as desired (if you know what you are doing).
+#trellis.par.set(theme=theme.mosaic()) # change default color scheme for lattice
+knitr::opts_chunk$set(
+  tidy=FALSE,     # display code as typed
+  size="small")   # slightly smaller font for code
+```
+
+#### **Intellectual Property:**
+These problems are the intellectual property of the instructors and may not be reproduced outside of this course.
+
+**.Rmd output format**:  The setting in this markdown document is `word_document`, since it is the output format listed at the top of the options (see lines 6-8 in .Rmd).  However, you have options for `word_document` or `pdf_document` - you may choose the output format (for your reading convenience, since the output is not directly submitted).
+
+***  
+
+##################################
+## Problem 1:  Model Assessment ##
+##################################
+
+This problem practices application of proper model assessment techniques, with a multiple linear regression model.
+
+Download the data set *TreesTransformed.csv* (from Homework 2 on Canvas) and read it into R.  Reference with description of the *original* measurements may be found at: [Trees Descriptions](https://stat.ethz.ch/R-manual/R-devel/library/datasets/html/trees.html)
+
+```{r echo=FALSE}
+# you may read in the data set here
+Trees <- read.csv("TreesTransformed.csv")  # retain for tables
+```
+
+The general goal for this dataset is to predict *Volume* based on *Girth* and *Height*, along with some transformations of those variables.  We will be fitting a predictive model using multiple linear regression.  The model is given below:
+$Volume = \beta_0+\beta_1\cdot Girth +\beta_2\cdot Height+\beta_3\cdot Girth\cdot Height+\beta_4 \cdot Girth^2+\beta_5\cdot Girth^2\cdot Height$  
+
+Note that there are five predictors, some of which are transformations of the original two variables *Girth* and *Height*, for predicting the value of the response variable *Volume.*  The transformed variables are included in the *TreesTransformed.csv* file, named *GirthHeight* (for $Girth\cdot Height$), *Girth2* (for $Girth^2$), and *Girth2Height* (for $Girth^2\cdot Height$).  
+
+***  
+
+
+### Question 1 **(2 points)**
+Why is *Volume* the most reasonable **response** variable?  *Include real-world reasons (eg. physical practicalities) in your discussion.*
+
+**Text Answer**
+
+
+
+
+***
+
+### Questions 2 **(1 point)**
+Use multiple linear regression fit the model to the full data set.  Identify the coefficient estimates ($\hat{\beta}_1$, $\hat{\beta}_2$, $\hat{\beta}_3$, $\hat{\beta}_4$, $\hat{\beta}_5$) for the five predictor terms.
+
+How many of the five predictor terms are significant at the $\alpha=0.10$ significance level?   
+
+```{r}
+
+
+```
+
+**Multiple Choice Answer (AUTOGRADED)**: 
+
+0,    
+1,  
+2,  
+3,  
+4, or   
+5
+
+*** 
+
+
+### **We now apply k-fold cross-validation to produce honest predictions, using the process outlined in the next several questions.**
+
+
+### Question 3 **(1 point)**
+Starting with:
+
+
+`groups = rep(1:5, length=31)`
+
+Set R’s seed to 2:
+
+`set.seed(2)`
+
+and then define cvgroups (random groups for the cross-validation) using the `sample()` function.  
+
+Enter your R code below.
+
+
+**Code Answer**
+
+```{r, echo=TRUE}
+# Question 3
+
+```
+
+***
+
+
+### Question 4 **(1 point)**
+With the above definition of cvgroups, use the 5-fold cross-validation method to produce honest predicted values.  Provide the predicted-y value for the **first** observation: (report answer to two decimal places)
+
+```{r, echo=F}
+Tree = c(1:4,":")
+Predicted = c("[what value belongs here?]","____",10.31, 16.36,":")
+Observed = c(10.3,10.3,10.2,16.4,":")
+TreePredictions = data.frame(Tree=Tree,
+                             Predicted=Predicted,
+                             Observed=Observed)
+knitr::kable(TreePredictions, align = "lcc")
+```
+
+**Code for questions 4-7**
+
+```{r, echo=TRUE}
+# use 5-fold CV
+
+# Questions 4-5
+
+# Question 6
+
+# report all code in question 7
+```
+
+
+**Numeric Answer (AUTOGRADED)**:
+
+
+
+### Question 5 **(1 point)**
+Again using the 5-fold cross-validation method for producing honest predicted values, provide the predicted-y value for the **second** observation: (report answer to two decimal places)
+
+
+```{r, echo=F}
+Tree = c(1:4,":")
+Predicted = c("____","[what value belongs here?]",10.31, 16.36,":")
+Observed = c(10.3,10.3,10.2,16.4,":")
+TreePredictions = data.frame(Tree=Tree,
+                             Predicted=Predicted,
+                             Observed=Observed)
+knitr::kable(TreePredictions, align = "lcc")
+```
+
+**Numeric Answer (AUTOGRADED)**:
+
+
+### Question 6 **(2 points)**
+
+Calculate and report the $CV_{(5)}$ based on the 5-fold cross-validation: (report answer to three decimal places)
+
+**Numeric Answer (AUTOGRADED)**:
+
+
+
+### Question 7 **(3 points)**
+Enter your full R code to perform the cross-validation and to compute the $CV_{(5)}$ measure below.  
+
+
+**Code Answer**:  (see above)
+
+
+***  
+
+
+
+### We will now use the **bootstrap** to estimate variability of the coefficients.
+
+
+### Question 8 **(3 points)**:
+
+Program a function, making use of `lm()` to fit the linear regression model, that outputs the six coefficient estimates.   Set R’s seed to 2:
+
+`set.seed(2)`
+
+and then use `boot()` to produce R = 1000 bootstrap estimates for each of $\beta_0$, $\beta_1$, $\beta_2$, $\beta_3$, $\beta_4$, and $\beta_5$.  
+Enter your R code below.
+
+**Code for questions 8-10**
+
+```{r echo=TRUE}
+# Question 8 
+
+# Questions 9-10
+
+# Question 11
+
+```
+
+
+
+### Use your bootstrap results to estimate the **standard errors** for the coefficients.    
+
+### Question 9 **(1 point)**:
+
+Report the standard error for the intercept,
+
+$SE(\hat{\beta_0}) =$   
+
+**Numeric Answer (AUTOGRADED)**:
+
+
+### Question 10 **(1 point)**:
+
+Report the standard error for the first term,
+
+$SE(\hat{\beta_1}) =$   
+
+**Numeric Answer (AUTOGRADED)**:
+
+
+### Question 11 **(2 points)**:
+
+The standard errors estimated from usual linear regression methods are shown in the R output below:
+
+```{r, echo=F}
+lmfitfulldata = lm(formula = Volume ~ .,data=Trees)
+knitr::kable(summary(lmfitfulldata)[[4]], align = "lrrrr")
+remove(lmfitfulldata)
+```
+
+How do these SE values compare to the estimated standard errors computed (via bootstrap) in the previous set of questions?
+
+**Multiple Choice Answer (AUTOGRADED)**: 
+
+A) 	The SE estimates from usual linear regression methods are **greater** than the SE estimates from bootstrap.
+
+	
+B)  The SE estimates from usual linear regression methods are **less** than the SE estimates from bootstrap.
+
+	
+C) 	The two sets of SE estimates are about the **same**.
+
+
+
+***
+
+#################################
+## Problem 2 - Model Selection ##
+#################################
+
+This problem practices application of proper model selection techniques, with a multiple linear regression model.
+
+We will continue working with the predictive model using multiple linear regression.  However, we will now consider selection between 6 possible models:
+
+Model 1: 
+$Volume = \beta_0+\beta_1\cdot Girth +\beta_2\cdot Height+\beta_3\cdot Girth\cdot Height+\beta_4 \cdot Girth^2+\beta_5\cdot Girth^2\cdot Height$  
+
+Model 2: 
+$Volume = \beta_0+\beta_1\cdot Girth +\beta_2\cdot Height$  
+
+Model 3: 
+$Volume = \beta_0+\beta_1\cdot Girth +\beta_2\cdot Height+\beta_3\cdot Girth\cdot Height$  
+
+Model 4: 
+$Volume = \beta_0+\beta_1\cdot Girth +\beta_2\cdot Height+\beta_4 \cdot Girth^2+\beta_5\cdot Girth^2\cdot Height$  
+
+Model 5: 
+$Volume = \beta_0+\beta_4 \cdot Girth^2+\beta_5\cdot Girth^2\cdot Height$  
+
+Model 6: 
+$Volume = \beta_0+\beta_5\cdot Girth^2\cdot Height$  
+
+Use LOOCV (note n = 31) method to calculate $CV_{(31)}$ for each of Models 1-6.  
+
+### Question 12 **(4 points)**:
+
+Enter your R code, including performing the cross-validation and computing the $CV_{(31)}$ measure for Model 1 below. 
+
+**Code for questions 12-14**
+
+```{r echo=TRUE}
+#Q12
+
+#Q13-14
+
+```
+
+
+### Question 13 **(1 point)**:
+
+For Model 1, report: $CV_{(31)}$ = **Numeric Answer (AUTOGRADED)**:
+
+### Question 14 **(1 point)**:
+
+For Model 2, report: $CV_{(31)}$ = **Numeric Answer (AUTOGRADED)**:
+
+### Question 15 **(1 point)**:
+
+Which model would you select based on the values of $CV_{(31)}$ for LOOCV? 
+
+**Multiple Choice Answer (AUTOGRADED)**:  one of  
+Model 1,  
+Model 2,  
+Model 3,  
+Model 4,  
+Model 5, or  
+Model 6  
+
+
+***
+
+### Question 16 **(1 point)**:
+
+Explain why you chose the model selected in the previous question.
+
+**Text Answer**
+
+***
+
+
+### Using the same split of the data into five sets as you performed in Problem 1, use 5-fold cross-validation method to calculate $CV_{(5)}$ for each of Models 1-6.  
+
+**Code for questions 17-18**
+
+```{r echo=TRUE}
+#cross-validation
+
+#Q17
+
+#Q18
+
+```
+
+
+### Question 17 **(1 point)**:
+
+For Model 1, report: $CV_{(5)}$ = **Numeric Answer (AUTOGRADED)**:
+
+
+### Question 18 **(1 point)**:
+
+For Model 2, report: $CV_{(5)}$ = **Numeric Answer (AUTOGRADED)**:
+
+
+### Question 19 **(1 point)**:
+
+Which model would you select based on the values of $CV_{(5)}$ for  5-fold CV? 
+
+**Multiple Choice Answer (AUTOGRADED)**:  one of  
+Model 1,  
+Model 2,  
+Model 3,  
+Model 4,  
+Model 5, or  
+Model 6  
+
+
+
+***
+
+### Question 20 **(2 points)**:
+
+Considering the form of the model that was selected by cross-validation, why does this model make sense from a practical standpoint?
+
+**Text Answer**:
+
+
+*** 
+
+
+#######################################################
+## Problem 3 - Model Assessment & Selection with KNN ##
+####################################################### 
+
+
+This problem practices application of proper model assessment and selection techniques, with the kNN model. 
+
+**Important**:  Use the FNN library for fitting K-nearest neighbors, to obtain consistent answers.
+
+In this problem, you will once again use the K-nearest neighbors approach to analyze the gas mileage of cars. You will be predicting **mpg** from the variables **weight** and **year**, using the **Auto** data set from the ISLR package. 
+
+
+***
+
+### Question 21 **(4 points)**:
+
+Starting with:
+
+`groups = rep(1:10,length=392)`
+
+Set R’s seed to 2:
+
+`set.seed(2)`
+
+and use `sample()` to divide the data into **ten** sets.  
+
+Then use 10-fold cross-validation method to calculate $CV_{(10)}$  for **1**-nearest neighbor regression. 
+
+**Important**:  
+
+   * Use only **weight** and **year** (not other variables) as predictors.
+   * You will need to standardize each training and validation set inside the cross-validation, according to the means and standard deviations  of the predictors from the training set. 
+
+Enter your R code for performing the cross-validation and computing the $CV_{(10)}$ measure below. 
+
+**Code Answer**: 
+```{r echo=TRUE}
+# code for #21
+
+#22 
+
+```
+
+
+
+### Question 22 **(2 points)**:
+
+Report the value.   
+
+$CV_{(10)}$ = **Numeric Answer (AUTOGRADED)**
+
+***
+
+### Question 23 **(1 point)**:
+
+In general, how should the $CV_{(10)}$ value compare to the value of MSE (computed by reusing the same data used to fit the model)?
+
+**Multiple Choice Answer (AUTOGRADED)**:  one of 
+
+$CV_{(10)} > MSE$,  
+$CV_{(10)} < MSE$, or  
+$CV_{(10)} \approx MSE$
+
+***
+
+### Question 24 **(3 points)**:
+
+Consider models 1-30 as the k-nearest neighbors regression for values of k from 1 to 30. Using the same split of the data into ten sets as you performed in the Model assessment section, use 10-fold cross-validation method to calculate CV(10) for each of Models 1-30; remember to re-standardize each training set inside the cross-validation. Make a plot of the CV(10) as a function of k.
+Embed your plot to the Quiz question.  
+
+```{r echo=FALSE}
+
+
+```
+
+**Plot upload:**
+
+***
+
+### Question 25 **(2 points)**:
+
+Which k (number of nearest neighbors) would you select based on the values of $CV_{(10)}$ for 10-fold CV?
+
+**Numeric (Integer) Answer (AUTOGRADED)**:  
+
+***
+
+
+### Question 26 **(2 points)**:
+
+Explain why you chose the k value specified in the previous question. *Comment on both model predictive ability and model complexity.*
+
+**Text Answer**: 

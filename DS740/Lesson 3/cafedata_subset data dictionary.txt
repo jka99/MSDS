@@ -1,0 +1,30 @@
+DESCRIPTIVE ABSTRACT:
+This dataset contains data from a caf�, called Executive Express, run by undergraduate business students at a Midwestern public university. It was collected over a ten-week period from January to April 2010. Variables include a number of types of items sold and wasted, along with total sales values. These data can be used to illustrate basic concepts of time series and forecasting, including trend, seasonality, and decomposition. The dataset may be of special relevance to instructors of business statistics students, who can utilize it to involve students in making data-driven business decisions. This data set is to accompany the article entitled Caf� Data.
+
+SOURCES: 
+The sales and item data were collected by the caf�s student volunteer workers each day from January 19 through April 1, 2010. The daily temperature data was obtained from an internet-based historical weather site called Weather Underground, http://www.wunderground.com/history/.
+
+VARIABLE DESCRIPTIONS:
+A header line containing variable names is included in the data file. Variables are tab delimited. Each day is one line in the data file. Missing observations are coded as na. The variables are as follows: 
+(1) t, time/day;
+(2) Date; 
+(3) Day Code: 1 = Monday, 2 = Tuesday, 3 = Wednesday, 4 = Thursday, 5 = Friday; 
+(4) Day of Week: Monday through Friday, caf� does not open on weekends;
+(5) Bread Sand Sold: Number of bread sandwiches sold per day; 
+(6) Bread Sand Waste: Number of bread sandwiches expired and thrown away each day; 
+(7) Wraps Sold: Number of wrap sandwiches sold per day; 
+(8) Wraps Waste: Number of wrap sandwiches expired and thrown away each day; 
+(9) Muffins Sold: Number of assorted muffins sold each day;
+(10) Muffins Waste: Number of assorted muffins expired and thrown away each day;
+(11) Cookies Sold: Number of assorted cookies sold each day;
+(12) Cookies Waste: Number of assorted cookies expired and thrown away each day;
+(13) Fruit Cup Sold: Number of fruit cups sold each day;
+(14) Fruit Cup Waste: Number of fruit cups expired and thrown away each day;
+(15) Chips: Number of bags of chips sold each day;
+(16) Juices: Number of assorted bottled juices sold each day;
+(17) Sodas: Number of cups of soda sold each day;
+(18) Coffees: Number of cups of coffee sold each day;
+(19) Total Soda and Coffee: Total number of cups of coffee and soda sold each day;
+(20) Sales: Total dollar sales indicated on sales register receipt each day;
+(21) Max Daily Temperature (F): Maximum daily temperature recorded for the city each day;
+(22) Total Items Wasted: Total number of items (including bread and wrap sandwiches, muffins, cookies, and fruit cups) expired and thrown away each day.
