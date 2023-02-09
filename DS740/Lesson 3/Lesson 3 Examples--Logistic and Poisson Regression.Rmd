@@ -24,10 +24,16 @@ library(gpk) # for elephant data
 # Logistic Regression
 ## Can we predict whether a person will default on their credit card debt?
 
+## default is response variable
+## '+' means not checking for interactions between response variables
+## '*' means we are checking for interactions between the predictors
+
 ```{r}
-fit = glm(default ~ student + balance,
-          data = Default, family = "binomial")
+fit = glm(default ~ student + balance,  
+          data = Default, # optional; see next block (i.e. always use data = x)
+          family = "binomial")
 summary(fit)
+contrasts(Default$default)
 ```
 ### The problem with using $ to specify data
 ```{r}
@@ -81,7 +87,7 @@ n = dim(Default)[1]
 ngroups = 10 # using 10-fold cross-validation
 groups = rep(1:ngroups, length = n)
 
-set.seed(123)
+set.seed(123)                       #
 cvgroups = sample(groups, n)
 all_predicted = numeric(length = n)
 
@@ -273,6 +279,11 @@ results <- results %>%
 results %>%
   gf_line(sensitivity ~ false_positive_rate, color =~ model) %>%
   gf_abline(slope = 1, intercept = 0, col = "gray")
+
+ggplot(results, aes(x = false_positive_rate, y = sensitivity, color = model)) +
+  geom_line() +
+  geom_abline(intercept = 0, slope = 1, linetype = "dashed") +
+  labs(x = "False Positive Rate", y = "True Positive Rate", color = "Model")
 ```
 
 ### ROC curves use predicted probabilities, not classifications
@@ -369,6 +380,11 @@ for(ii in 1:length(prob_thresh)){
 
 ```{r}
 gf_point(total_cost ~ prob_thresh)
+plot(prob_thresh, total_cost, type = "l", xlab = "Probability Threshold", 
+     ylab = "Total Cost")
+ggplot(data.frame(prob_thresh, total_cost), aes(x = prob_thresh, y = total_cost)) +
+  geom_line() +
+  labs(x = "Probability Threshold", y = "Total Cost")
 ```
 ```{r}
 max(total_cost)
