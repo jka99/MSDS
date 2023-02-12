@@ -21,7 +21,7 @@ summary(heart)
 heart <- heart %>% 
     mutate(Sex = as.factor(Sex), 
         ChestPain = as.factor(ChestPain), 
-        HighBloodSugar = as.factor(HighBloodSugar), 
+        HighBloodSugar = as.factor(HighBloodSugar), p
         ECG = as.factor(ECG), 
         ExerAngina = as.factor(ExerAngina), 
         Slope = as.factor(Slope), 

@@ -10,6 +10,15 @@ library(readr)
 library(ggformula)
 library(leaps)
 
+College1 <- College[-96,] # remove NA row
+
+### Poisson Regression
+# Poisson regression is used to model count data, i.e., data that can only take on
+# non-negative integer values. The response variable is assumed to be a Poisson
+# random variable with a mean that is a function of the predictor variables.
+# The Poisson distribution is a discrete probability distribution that expresses
+
+
 ### Multicolllinearity <- I typed this ***
 # Multicollinearity is a problem in regression analysis in which two or more 
 # predictor variables are highly correlated.
@@ -88,6 +97,9 @@ library(leaps)
 # Correlation does not imply causation, so just because two variables are correlated
 # does not mean that one causes the other.
 
+# calculate correlation matrix
+correlation_matrix <- cor(College1[, -1])
+
 ### Variance Inflation Factor (VIF)
 # Variance inflation factor (VIF) is a measure of the severity of multicollinearity
 # in an ordinary least squares regression analysis. VIF measures the inflation of
@@ -102,6 +114,10 @@ library(leaps)
 # VIF measures the inflation of the variance of the regression coefficient estimates
 # due to multicollinearity. VIF is calculated as the ratio of the variance in a model
 # with multiple terms to the variance of a model with one term alone.
+
+# calculate VIF
+fit = lm(Grad.Rate ~ ., data = College1)
+vif_College1 <- vif(lm(Grad.Rate ~ ., data = College1))
 
 ### Condition Number
 # Condition number is a measure of the sensitivity of the solution of a mathematical
