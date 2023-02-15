@@ -28,6 +28,8 @@ knitr::opts_chunk$set(
 
 Load packages here.
 ```{r, message=FALSE}
+library(dplyr)
+library(ggformula)
 
 ```
 
@@ -70,7 +72,16 @@ Tell R to treat them as factors.  Enter your R code below.
 
 **Code Answer**: 
 ```{r}
-
+wisc_income <- read.csv("Wisconsin_income-1.csv")
+wisc_income <- wisc_income %>% 
+  mutate(CIT2 = as.factor(CIT2),
+        COW = as.factor(COW),
+        LANX = as.factor(LANX),
+        MAR = as.factor(MAR),
+        SEX = as.factor(SEX),
+        DIS = as.factor(DIS),
+        RAC = as.factor(RAC),
+        Hispanic = as.factor(Hispanic))
 ```
 
 
@@ -81,7 +92,8 @@ Make histograms of people’s total earnings, usual hours worked per week, and t
 
 **Code Answer**: 
 ```{r}
-
+hist(log(wisc_income$WKHP))
+hist(wisc_income$WKHP)
 ```
 
 
@@ -93,7 +105,38 @@ If you log-transformed any variables in the previous question, use the **transfo
 
 **Code Answer**: 
 ```{r}
+### Load packages
+library(ggformula)
+library(leaps)
+### Load data
+wisc_income <- read.csv("Wisconsin_income-1.csv")
+wisc_income <- wisc_income %>% 
+  mutate(CIT2 = as.factor(CIT2),
+        COW = as.factor(COW),
+        LANX = as.factor(LANX),
+        MAR = as.factor(MAR),
+        SEX = as.factor(SEX),
+        DIS = as.factor(DIS),
+        RAC = as.factor(RAC),
+        Hispanic = as.factor(Hispanic),
+# add log transformation of JWMP and PERNP
+        JWMNP.log = log(JWMNP),
+        PERNP.log = log(PERNP))
 
+#### Slide 29 presentation 2
+
+regfit = regsubsets(PERNP ~., data = wisc_income, nvmax = 39)
+regfit
+plot(regfit)
+plot(regfit, scale = "adjr2")
+regfit.summary = summary(regfit)
+regfit.summary$bic
+
+plot(regfit.summary$bic, xlab = "Number of Variables", ylab = "BIC", type = "l", lwd = 1)
+which.min(regfit.summary$bic)
+which.min(regfit.summary$cp)
+which.max(regfit.summary$adjr2)
+coef(regfit, 17)
 ```
 
 
