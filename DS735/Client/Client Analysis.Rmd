@@ -1,0 +1,56 @@
+---
+title: "Untitled"
+author: "Jeff Watson"
+date: "2022-11-06"
+output: html_document
+---
+
+```{r}
+library(dplyr)
+library(readxl)
+library(GGally)
+library(ggplot2)
+```
+
+```{r}
+data <- read.csv("C:\\Users\\jeffe\\Documents\\MSDS\\DS735\\Project 2\\turnover.csv")
+```
+
+
+```{r}
+turnover <- data %>%
+  mutate(Gender = if_else(Sex == 1, "Male", "Female"), Retention = if_else(Termd==0, "Yes", "No")) %>%
+  filter(TermType == c(0, 2), ReasonForLeaving != "Retirement", Tenure < 15) %>%
+  select(Termd, TermType, BusinessUnit, EEGroup, Commission, RecentRating, Tenure,
+         PayIncreases, FinalPay, Promotion, ReasonForLeaving, Gender, Retention) 
+
+ggplot(data = turnover, mapping = aes(x=Retention, y=Tenure, fill = Retention)) +
+  geom_boxplot() +
+  labs(title = "How does tenure affect retention?", y = "Years of Service")
+
+ggplot(data = turnover, mapping = aes(x=Retention, y=Tenure, fill = Gender)) +
+  geom_boxplot() +
+  labs(title = "How does tenure affect retention?", subtitle = "What effect does gender have?", y = "Years of Service")
+
+ggplot(data = turnover, mapping = aes(x=Retention, y=PayIncreases, fill = Retention)) +
+  geom_boxplot() +
+  labs(title = "How do the number of pay increases affect employee retention?", y = "Number of pay increases") 
+
+ggplot(data = turnover, mapping = aes(x=Retention, y=PayIncreases, fill = Gender)) +
+  geom_boxplot() +
+  labs(title = "How do the number of pay increases affect employee retention?", subtitle = "Does gender play a role?", y = "Number of pay increases")
+
+# ggplot(data = turnover, mapping = aes(x=Gender, y=PayIncreases, fill = ReasonForLeaving)) +
+#   geom_boxplot()
+```
+
+
+
+```{r}
+turnover %>%
+  group_by(Termd) %>%
+  summarise(first=quantile(Tenure, probs = 0.25),
+            second = quantile(Tenure, probs = 0.5),
+            third = quantile(Tenure, probs = 0.75))
+```
+
