@@ -18,7 +18,8 @@ NewAuto %>%
     count()
 
 ### question 2
-gf_boxplot(mpg ~ as.factor(Domestic), data = NewAuto, fill = c("skyblue", "pink"))
+gf_boxplot(mpg ~ as.factor(Domestic), data = NewAuto, 
+    fill = c("skyblue", "pink"))
 
 ### question 3 and 4
 NewAuto %>%
