@@ -36,14 +36,14 @@ confmat <- table(NewAuto$Domestic, predict(model, data = NewAuto)$class); confma
 
 ### question 7
 confmat[2,2] / (confmat[2,2] + confmat[2,1])
+sensitivity <- confmat[2,2]/sum(confmat[2,])
 
-### FIX THIS
 ### question 8
 TN = confmat[1,1]; TN
-FN = confmat[1,2]; FN
+FP = confmat[1,2]; FP
 TP = confmat[2,2]; TP
-FP = confmat[2,1]; FP
-TN / (TN + FP)
+FN = confmat[2,1]; FN
+specificity <- TN / (TN + FP)
 
 ### question 9
 gf_boxplot(displacement ~ as.factor(Domestic), data = NewAuto) ### <-- WINNER
@@ -285,9 +285,9 @@ xJapanese = NewAutoOrigin %>%
   dplyr::select(mpg, cylinders, displacement, horsepower, weight)
 
 # check for multivariate normality
-mhz(xAmerican)$mv.test
-mhz(xEuropean)$mv.test
-mhz(xJapanese)$mv.test
+AmTest <- mhz(xAmerican)$mv.test
+EuTest <- mhz(xEuropean)$mv.test
+JaTest <- mhz(xJapanese)$mv.test
 #multivariate normality of the predictors is (close to) reasonable
 
 # check for equal covariance
@@ -324,3 +324,33 @@ BoxM(xvar,NewAutoOrigin$origin)
 # 25 -- lower than CV(10) for Model 1
 # 26 -- FIX (answer is 33)
 # 27 -- 63
+
+
+### Question 31
+Auto1 <- Auto %>%
+  mutate(origin = as.factor(origin))
+
+x <- Auto1 # dataframe with predictors
+n = dim(x)[1] # number of observations
+nfolds = 10 # number of folds
+groups = rep(1:nfolds, length = n) # create a vector of group numbers
+set.seed(1) # set seed for reproducibility
+cvgroups = sample(groups, n) # randomize the groups
+allpredicted = rep(NA, n) # vector to store predicted values
+
+for (ii in 1:nfolds){
+    groupii = (cvgroups == ii) # create a logical vector for the test set
+    trainset = x[!groupii, ] # create the training set
+    testset = x[groupii, ] # create the test set
+
+    modelfit = glm(origin ~ mpg + cylinders + displacement + horsepower + weight, 
+                    data = trainset, family = "binomial") # fit the model
+    predicted = predict(modelfit, newdata = testset, 
+                        type = "response") # predict
+    allpredicted[groupii] = predicted # store the predicted values
+}
+
+my_roc = multiclass.roc(response = Auto1$origin, predictor = allpredicted)
+plot.roc(my_roc)
+auc(my_roc)
+table(Auto1$origin, allpredicted)
