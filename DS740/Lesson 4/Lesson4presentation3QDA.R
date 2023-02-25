@@ -30,8 +30,8 @@ set.seed(4)
 cvgroups = sample(groups,n)
 
 ############# apply LDA, using one predictor to classify Species (Model L1) #############
-#methodapplied = "LDA"
-#modelapplied = (Species~Petal.Length)
+methodapplied = "LDA"
+modelapplied = (Species~Petal.Length)
 ############# apply QDA, using one predictor to classify Species (Model Q1) #############
 #methodapplied = "QDA"
 #modelapplied = (Species~Petal.Length)
@@ -80,10 +80,10 @@ CVError = sum(CVpredclass!=y)/n; CVError
 
 
 ############# Model selection ############# 
-CVErrorL1   #lda with 1 predictor
-CVErrorQ1   #qda with 1 predictor
-CVErrorL4   #lda with 4 predictors
-CVErrorQ4   #qda with 4 predictors
+#CVErrorL1   #lda with 1 predictor
+#CVErrorQ1   #qda with 1 predictor
+#CVErrorL4   #lda with 4 predictors
+#CVErrorQ4   #qda with 4 predictors
 
 #equal covariance matrices are definitely NOT reasonable, 
 #  so we prefer models Q1 and Q4 (QDA) to the LDA models 
