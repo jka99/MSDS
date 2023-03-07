@@ -74,13 +74,21 @@ elnino = read.csv("elnino.csv")
 elnino <- na.omit(elnino)
 
 # question 10
-fit.elnino <- lm(air.temp ~ zon.winds + mer.winds + humidity + s.s.temp, data = elnino)
-res <- resid(fit.elnino)
-plot(fitted(fit.elnino), res, main = "Fitted vs Residuals", xlab = "Fitted Values", ylab = "Residuals")
-
+fit.elnino.A <- lm(air.temp ~ zon.winds + mer.winds + humidity + s.s.temp, data = elnino)
+res <- resid(fit.elnino.A)
+plot(fitted(fit.elnino.A), res, main = "Fitted vs Residuals", xlab = "Fitted Values", ylab = "Residuals")
+abline(h = 0, col = "red")
 # question 11
 qqnorm(res)
 qqline(res)
 
 # question 12
-answer12 <- ""
+answer12 <- "The variability of the residuals expands as the predicted value of the predictor variable increases. The variability is generally symmetrical around 0, though slightly more negative than positive. The Normal Q-Q plot shows that the data are generally normal. A linear model may be appropriate for this data."
+
+# question 13
+fit.elnino.B <- gls(air.temp ~ zon.winds + mer.winds + humidity + s.s.temp, data = elnino, correlation = corAR1(form = ~ 1))
+res <- resid(fit.elnino.B)
+plot(fitted(fit.elnino.B), res, main = "Fitted vs Residuals", xlab = "Fitted Values", ylab = "Residuals")
+abline(h = 0, col = "red")
+qqnorm(res)
+qqline(res)
