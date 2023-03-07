@@ -127,7 +127,7 @@ newcoef = fit.w$coef
 iter = 0 
 
 while(sum(abs(oldcoef-newcoef)) > .0001 & iter < 100){
-    MAR = median(abs(fit.w$residuals))
+    MAR = median(abs(fit.w$residuals)) # Median absolute value of residuals
     sigma = MAR/0.6745
     k = 4.685*sigma
     sqrt_w = pmax(1-(fit.w$residuals/k)^2, 0)
