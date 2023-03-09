@@ -1,6 +1,7 @@
 library(dplyr)
 library(smss)
 library(MASS)
+library(nlme)
 library(ggformula)
 data("crime2005")
 
@@ -21,20 +22,24 @@ newcoef = model$coef
 iter = 0
 
 while(sum(abs(oldcoef-newcoef)) > .0001 & iter < 100){
-  w = 1/(model$fitted.values^2)
-  model2 <- lm(VI2 ~ ME + PO, data = crime2005, weights=w)
-  
+  MAR = median(abs(model$residuals))
+  sigma = MAR/0.6745
+  k = 1.345 * sigma
+  w = pmin(k/(abs(model$residuals)), 1)
+
+  fit = lm(VI2 ~ ME + PO, data = crime2005, weights=w)
+
   iter = iter + 1
   oldcoef = newcoef
-  newcoef = model$coef
+  newcoef = fit$coef
 }
 
 # question 4
-summary(model2)
+newcoef
 
 # question 5
 while(sum(abs(oldcoef - newcoef)) > 0.0001 & iter < 100){
-  MAR = median(abs(model2$residuals))
+  MAR = median(abs(model$residuals))
   sigma = MAR/0.6745
   k = 4.685 * sigma
   w = pmax(1-(model2$residuals/k)^2, 0)
@@ -45,9 +50,10 @@ while(sum(abs(oldcoef - newcoef)) > 0.0001 & iter < 100){
   oldcoef = newcoef
   newcoef = model$coef
 }
+newcoef
 
 fit_bisquare <- rlm(VI2 ~ ME + PO, data = crime2005, psi = psi.bisquare)
-
+fit_bisquare$coefficients
 
 # question 6
 summary(fit_bisquare)
@@ -92,3 +98,18 @@ plot(fitted(fit.elnino.B), res, main = "Fitted vs Residuals", xlab = "Fitted Val
 abline(h = 0, col = "red")
 qqnorm(res)
 qqline(res)
+
+fit.elnino.A$coefficients
+fit.elnino.B$coefficients
+answer13 <- "The coefficients for Model B are lower than they are for Model A. Model B (the gls) takes into account the correlation among the errors and adjusts for the heterogeneity of variance. This results in more accurate and efficient coefficient estimates."
+
+# question 14
+resid_elnino <- elnino %>%
+  mutate(residuals = resid(fit.elnino.B))
+
+resid_elnino <- resid_elnino %>%
+  mutate(prev_residuals = lag(residuals, 1)) %>%
+  filter(buoy == 3)
+
+  resid_elnino <- resid_elnino[-1,]
+gf_point(residuals ~ prev_residuals, data = resid_elnino)
