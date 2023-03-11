@@ -1,9 +1,8 @@
----
-title: "Lesson 6 Examples--Grouped Data and Robust Regression"
-author: "Abra Brisbin"
-date: "7/17/2021"
-output: word_document
----
+```{r}
+#test
+```
+
+
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
