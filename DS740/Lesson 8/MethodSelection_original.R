@@ -3,7 +3,7 @@ library(FNN)
 library(glmnet)
 
 ############# Data Prep #############
-bodyfat = read.csv("bodyfat.csv")
+bodyfat = read.csv("bodyfat-1.csv")
 
 dim(bodyfat)
 n = dim(bodyfat)[1]

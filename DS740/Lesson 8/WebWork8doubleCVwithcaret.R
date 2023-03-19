@@ -120,3 +120,6 @@ table(heart$HD,allpredictedCV.out)
 CV10.out = sum(heart$HD!=allpredictedCV.out)/n.out
 p.out = 1-CV10.out; p.out  
 
+CV.valid = sum(testxy.out$HD!=predictvalid)/nvalid
+p.valid = 1-CV.valid
+p.valid
