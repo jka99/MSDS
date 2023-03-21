@@ -1,5 +1,5 @@
 # define data frame heart as in WebWork Lesson 8, Problem 4
-
+setwd("C:/Users/jeffe/Documents/MSDS/GitHub/MSDS/DS740/Lesson 8")
 input = read.csv("Heart_Disease_Cleveland.csv")
 names(input)
 heart = input[,c(1,4,5,8,10)]
@@ -15,7 +15,8 @@ library(MASS)
 library(caret)
 library(dplyr)
 
-##### model assessment OUTER 10-fold CV (with model selection INNER 10-fold CV as part of model-fitting) #####
+##### model assessment OUTER 10-fold CV #####
+##### (with model selection INNER 10-fold CV as part of model-fitting) #####
 
 xy.out = heart
 n.out = dim(xy.out)[1]
