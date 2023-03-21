@@ -19,7 +19,9 @@ alllambda = exp(-100:20/10)
 # kNN 
 allkNN = 1:20
 # model counts and types
-mLin = length(allLinModels); mkNN = length(allkNN); mLASSO = length(alllambda)
+mLin = length(allLinModels)
+mkNN = length(allkNN)
+mLASSO = length(alllambda)
 mmodels = mLin+mkNN+mLASSO
 modelMethod = c(rep("Linear",mLin),rep("LASSO",mLASSO),rep("kNN",mkNN))
 
