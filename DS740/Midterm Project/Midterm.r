@@ -96,11 +96,12 @@ qqnorm(cars04$Wheelbase); qqline(cars04$Wheelbase)
 
 ######## ENET #########
 ### Feature Selection ###
+options(scipen = 999)
+set.seed(99)
 lambdalist = seq(0.001, 1, length = 100)
 alphalist = seq(0.1, 1, length = 10)
 ENET.data <- cars04 %>%
-  dplyr::select(logRetailPrice, Engine, Cylinders, logHorsePower, 
-                Type, AWD, RWD)
+  dplyr::select(logRetailPrice, Cylinders, logHorsePower,Type, AWD, RWD)
 ENET.model <- (logRetailPrice ~ .)
 fit_caret_ENET = train(ENET.model, data = ENET.data,
                        method = "glmnet", trControl = training,
@@ -110,17 +111,19 @@ fit_caret_ENET = train(ENET.model, data = ENET.data,
 fit_caret_ENET
 coef(fit_caret_ENET$finalModel, s = fit_caret_ENET$bestTune$lambda)
 ### Results ###
-# based on repeated runs of the ENET, we can remove logCityMPG, Weight, 
-# Wheelbase, and logHwyMPG
-# the coef for TypeOther, is also zero, but removing it will create a 
-# ton of NAs. will leave in for ease of model design
-# will use the same model for RR
-# will also use a full model for both to see how it compares to the 
+# Based on repeated runs of the ENET on a set seed, removing useless 
+# predictors on each run, I can trim the model 
+# to logRetailPrice, Cylinders, logHorsePower, Type, AWD, and RWD
+#
+# The coef for TypeOther, is also zero, but removing it will create a 
+# ton of NAs. I will leave in for ease of model design
+# I will use this same model for RR
+# I will also use a full model for both to see how it compares to the 
 # trimmed model
+
+######
 ENET.data <- cars04 %>%
-  dplyr::select(logRetailPrice, Engine, Cylinders, 
-                logHorsePower, logCityMPG, logHwyMPG, 
-                Weight, Wheelbase, Type, AWD, RWD)
+  dplyr::select(logRetailPrice, Cylinders, logHorsePower,Type, AWD, RWD)
 
 dmy <- dummyVars(logRetailPrice ~ ., data = ENET.data)
 
