@@ -109,19 +109,24 @@ corrplot(cars04cor, type = "upper", order = "hclust",
 # Check for interactions
 ggplot(data = cars04, aes(x = Horsepower, y = Retailprice, color = Type)) +
   geom_point() +
-  geom_smooth(se = FALSE)
+  geom_smooth(se = FALSE) +
+  labs(title = "Retailprice as a function of Horsepower")
 
 ggplot(data = cars04, aes(x = Cylinders, y = Retailprice, color = Type)) +
   geom_point()
 
-### Feature Selection ###
-
-set.seed(3)
-lambdalist = seq(0.001, 1, length = 100)
-alphalist = seq(0.1, 1, length = 100)
-model.data <- cars04 %>%
-  dplyr::select(logRetailPrice, Cylinders, logHorsePower, Type, AWD, RWD)
-
+ggplot(data = cars04, aes(x = Type, y = Retailprice, fill = Type)) +
+  geom_jitter() +
+  labs(title = "Retailprice density as a function of Type")
+  
+# ### Feature Selection ###
+# 
+# 
+# lambdalist = seq(0.001, 1, length = 100)
+# alphalist = seq(0.1, 1, length = 100)
+# model.data <- cars04 %>%
+#   dplyr::select(logRetailPrice, Cylinders, logHorsePower, Type, AWD, RWD)
+# 
 # ENET.model <- (logRetailPrice ~ .)
 # fit_caret_ENET = train(ENET.model, data = model.data,
 #                        method = "glmnet", trControl = training,
@@ -150,7 +155,7 @@ alphalist = seq(0.01, 1, length = 100)
 # define the cross-validation splits 
 nfolds = 5 
 groups.out = rep(1:nfolds,length = n) 
-set.seed(9)
+set.seed(8)
 cvgroups.out = sample(groups.out, n)  
 allpredictedCV.out = rep(NA, n)
 
@@ -240,22 +245,29 @@ for (ii in 1:nfolds)  {
   one_best_Model = all_best_Models[[which.min(all_best_RMSE)]]
   one_best_RSME = all_best_RMSE[[which.min(all_best_RMSE)]]
   
-  allpred.Method[groupii] = one_best_Type
-  allpred.RMSE[groupii] = one_best_RSME
+  allpred.Method[ii] = one_best_Type
+  allpred.RMSE[ii] = one_best_RSME
   
   if(one_best_Type == "ENET"){
     ENETlambda = one_best_Pars[[1]]$lambda
-    allpred.CV = predict(one_best_Model, newx = testx, s = ENETlambda)
+    allpred.CV[groupii] = predict(one_best_Model, newx = testx, s = ENETlambda)
   } else if(one_best_Type == "RR"){
     RRlambda = one_best_Pars[[1]]$lambda
-    allpred.CV = predict(one_best_Model, newdata = test)
+    allpred.CV[groupii] = predict(one_best_Model, newdata = test)
   }
 
   ############# END ##############
   
   
-  }
+}
 coef(fit_caret_RR$finalModel, s = fit_caret_RR$bestTune$lambda)
 one_best_Type
 one_best_Pars
 one_best_RSME
+
+y <- cars04$logRetailprice
+
+# Actual VS Predicted Retail Price plot
+plot(exp(y)~exp(allpred.CV))
+
+
