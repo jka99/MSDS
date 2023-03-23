@@ -34,7 +34,8 @@ cars04 <- cars04 %>%
     Minivan = as.factor(Minivan),
     Pickup = as.factor(Pickup),
     logRetailPrice = log(Retailprice), logHorsePower = log(Horsepower),
-    logCityMPG = log(CityMPG), logHwyMPG = log(HwyMPG)) %>%
+    logCityMPG = log(CityMPG), logHwyMPG = log(HwyMPG),
+    logWeight = log(Weight)) %>%
   mutate(Type = case_when(Sport == 1 ~ "Sport",
                           SUV == 1 ~ "SUV",
                           Wagon == 1 ~ "Wagon",
@@ -43,62 +44,68 @@ cars04 <- cars04 %>%
                           TRUE ~ "Other")) %>%
   dplyr::select(Retailprice, logRetailPrice, Engine, Cylinders, Horsepower, 
                 logHorsePower, CityMPG, logCityMPG, HwyMPG, logHwyMPG, 
-                Weight, Wheelbase, Type, AWD, RWD)
+                Weight, logWeight, Wheelbase, Type, AWD, RWD)
 
 full.model.data <- cars04 %>%
   dplyr::select(Retailprice, logRetailPrice, Engine, Cylinders, Horsepower, 
                 logHorsePower, CityMPG, logCityMPG, HwyMPG, logHwyMPG, 
-                Weight, Wheelbase, Type, AWD, RWD)
+                logWeight, Wheelbase, Type, AWD, RWD)
 
 ### Data Assessment ###
 # Check Normality, Transform if needed
 #1
-par(mfrow=c(2,2))
+par(mfrow=c(4,2))
 hist(cars04$Retailprice)
-qqnorm(cars04$Retailprice); qqline(cars04$Retailprice)
+qqnorm(cars04$Retailprice); qqline(cars04$Retailprice, col = "red")
 #2
 #par(mfrow=c(2,1))
 hist(log(cars04$Retailprice)) # like this one better
-qqnorm(log(cars04$Retailprice)); qqline(log(cars04$Retailprice))
-#3
-#par(mfrow=c(2,1))
-hist(cars04$Engine)
-qqnorm(cars04$Engine); qqline(cars04$Engine)
+qqnorm(log(cars04$Retailprice)); qqline(log(cars04$Retailprice), col = "red")
+
 #4
 #par(mfrow=c(2,1))
 hist(cars04$Horsepower)
-qqnorm(cars04$Horsepower); qqline(cars04$Horsepower)
+qqnorm(cars04$Horsepower); qqline(cars04$Horsepower, col = "red")
 #5
 #par(mfrow=c(2,1))
 hist(log(cars04$Horsepower)) # log transform for horsepower is better
-qqnorm(log(cars04$Horsepower)); qqline(log(cars04$Horsepower))
+qqnorm(log(cars04$Horsepower)); qqline(log(cars04$Horsepower), col = "red")
+
+#3
+#par(mfrow=c(2,1))
+hist(cars04$Engine)
+qqnorm(cars04$Engine); qqline(cars04$Engine, col = "red")
+
 #6
 #par(mfrow=c(2,1))
 hist(cars04$CityMPG)
-qqnorm(cars04$CityMPG); qqline(cars04$CityMPG)
+qqnorm(cars04$CityMPG); qqline(cars04$CityMPG, col = "red")
 
 #7
 hist(log(cars04$CityMPG))
-qqnorm(log(cars04$CityMPG)); qqline(log(cars04$CityMPG))
+qqnorm(log(cars04$CityMPG)); qqline(log(cars04$CityMPG), col = "red")
 
 #8
 #par(mfrow=c(2,1))
 hist(cars04$HwyMPG)
-qqnorm(cars04$HwyMPG); qqline(cars04$HwyMPG)
+qqnorm(cars04$HwyMPG); qqline(cars04$HwyMPG, col = "red")
 
 #9
 hist(log(cars04$HwyMPG))
-qqnorm(log(cars04$HwyMPG)); qqline(log(cars04$HwyMPG))
+qqnorm(log(cars04$HwyMPG)); qqline(log(cars04$HwyMPG), col = "red")
 
 #10
 #par(mfrow=c(2,1))
 hist(cars04$Weight)
-qqnorm(cars04$Weight); qqline(cars04$Weight)
+qqnorm(cars04$Weight); qqline(cars04$Weight, col = "red")
+
+hist(cars04$logWeight)
+qqnorm(cars04$logWeight); qqline(cars04$logWeight, col = "red")
 
 #11
 #par(mfrow=c(2,1))
 hist(cars04$Wheelbase)
-qqnorm(cars04$Wheelbase); qqline(cars04$Wheelbase)
+qqnorm(cars04$Wheelbase); qqline(cars04$Wheelbase, col = "red")
 
 # Check correlations
 par(mfrow = c(1,1))
@@ -115,26 +122,31 @@ ggplot(data = cars04, aes(x = Horsepower, y = Retailprice, color = Type)) +
 ggplot(data = cars04, aes(x = Cylinders, y = Retailprice, color = Type)) +
   geom_point()
 
-ggplot(data = cars04, aes(x = Type, y = Retailprice, fill = Type)) +
+ggplot(data = cars04, aes(x = Type, y = Retailprice, color = Type)) +
   geom_jitter() +
-  labs(title = "Retailprice density as a function of Type")
+  labs(title = "RetailPrice density as a function of Type")
+
+ggplot(data = cars04, aes(x = Type, y = Retailprice, fill = Type)) +
+  geom_boxplot() +
+  labs(title = "RetailPrice density as a function of Type")
   
 # ### Feature Selection ###
-# 
-# 
-# lambdalist = seq(0.001, 1, length = 100)
-# alphalist = seq(0.1, 1, length = 100)
-# model.data <- cars04 %>%
-#   dplyr::select(logRetailPrice, Cylinders, logHorsePower, Type, AWD, RWD)
-# 
-# ENET.model <- (logRetailPrice ~ .)
-# fit_caret_ENET = train(ENET.model, data = model.data,
-#                        method = "glmnet", trControl = training,
-#                        tuneGrid = expand.grid(alpha = alphalist, 
-#                                               lambda = lambdalist),
-#                        na.action = na.omit)
-#fit_caret_ENET
-#coef(fit_caret_ENET$finalModel, s = fit_caret_ENET$bestTune$lambda)
+
+set.seed(8)
+lambdalist = seq(0.001, 1, length = 100)
+alphalist = seq(0.1, 1, length = 100)
+model.data <- cars04 %>%
+  dplyr::select(logRetailPrice, Cylinders, logHorsePower, 
+                logWeight, Type, AWD, RWD)
+
+ENET.model <- (logRetailPrice ~ .)
+fit_caret_ENET = train(ENET.model, data = model.data,
+                       method = "glmnet", trControl = training,
+                       tuneGrid = expand.grid(alpha = alphalist,
+                                              lambda = lambdalist),
+                       na.action = na.omit)
+fit_caret_ENET
+coef(fit_caret_ENET$finalModel, s = fit_caret_ENET$bestTune$lambda)
 
 
 ### Results ###
@@ -145,6 +157,9 @@ ggplot(data = cars04, aes(x = Type, y = Retailprice, fill = Type)) +
 ##### model assessment OUTER 5-fold CV #####
 ##### (with model selection INNER 10-fold CV as part of model-fitting) #####
 
+model.data <- cars04 %>%
+  dplyr::select(logRetailPrice, Cylinders, logHorsePower, 
+                logWeight, Type, AWD, RWD)
 
 carsmatrix = model.matrix(logRetailPrice ~., data = model.data)
 fulldata = data.frame(logRetailPrice = model.data$logRetailPrice, carsmatrix)
@@ -265,9 +280,10 @@ one_best_Type
 one_best_Pars
 one_best_RSME
 
-y <- cars04$logRetailprice
+y <- cars04$logRetailPrice
 
 # Actual VS Predicted Retail Price plot
 plot(exp(y)~exp(allpred.CV))
-
+abline(a = 0, b = 1, col = "blue", lwd = 2)
+abline(v = 40000, col = "red", lwd = 2, lty = 2)
 
