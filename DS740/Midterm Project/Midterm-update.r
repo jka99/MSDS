@@ -119,34 +119,27 @@ ggplot(data = cars04, aes(x = Horsepower, y = Retailprice, color = Type)) +
   geom_smooth(se = FALSE) +
   labs(title = "Retailprice as a function of Horsepower")
 
-ggplot(data = cars04, aes(x = Cylinders, y = Retailprice, color = Type)) +
-  geom_point()
-
 ggplot(data = cars04, aes(x = Type, y = Retailprice, color = Type)) +
   geom_jitter() +
-  labs(title = "RetailPrice density as a function of Type")
+  labs(title = "Retailprice density as a function of Type")
 
-ggplot(data = cars04, aes(x = Type, y = Retailprice, fill = Type)) +
-  geom_boxplot() +
-  labs(title = "RetailPrice density as a function of Type")
-  
 # ### Feature Selection ###
 
-set.seed(8)
-lambdalist = seq(0.001, 1, length = 100)
-alphalist = seq(0.1, 1, length = 100)
-model.data <- cars04 %>%
-  dplyr::select(logRetailPrice, Cylinders, logHorsePower, 
-                logWeight, Type, AWD, RWD)
-
-ENET.model <- (logRetailPrice ~ .)
-fit_caret_ENET = train(ENET.model, data = model.data,
-                       method = "glmnet", trControl = training,
-                       tuneGrid = expand.grid(alpha = alphalist,
-                                              lambda = lambdalist),
-                       na.action = na.omit)
-fit_caret_ENET
-coef(fit_caret_ENET$finalModel, s = fit_caret_ENET$bestTune$lambda)
+set.seed(9)
+# lambdalist = seq(0.001, 1, length = 100)
+# alphalist = seq(0.1, 1, length = 100)
+# model.data <- cars04 %>%
+#   dplyr::select(logRetailPrice, Cylinders, logHorsePower, 
+#                 logWeight, Type, AWD, RWD)
+# 
+# ENET.model <- (logRetailPrice ~ .)
+# fit_caret_ENET = train(ENET.model, data = model.data,
+#                        method = "glmnet", trControl = training,
+#                        tuneGrid = expand.grid(alpha = alphalist,
+#                                               lambda = lambdalist),
+#                        na.action = na.omit)
+# fit_caret_ENET
+# coef(fit_caret_ENET$finalModel, s = fit_caret_ENET$bestTune$lambda)
 
 
 ### Results ###
@@ -158,7 +151,7 @@ coef(fit_caret_ENET$finalModel, s = fit_caret_ENET$bestTune$lambda)
 ##### (with model selection INNER 10-fold CV as part of model-fitting) #####
 
 model.data <- cars04 %>%
-  dplyr::select(logRetailPrice, Cylinders, logHorsePower, 
+  dplyr::select(logRetailPrice, Engine, Cylinders, logHorsePower, 
                 logWeight, Type, AWD, RWD)
 
 carsmatrix = model.matrix(logRetailPrice ~., data = model.data)
@@ -170,7 +163,7 @@ alphalist = seq(0.01, 1, length = 100)
 # define the cross-validation splits 
 nfolds = 5 
 groups.out = rep(1:nfolds,length = n) 
-set.seed(8)
+set.seed(99)
 cvgroups.out = sample(groups.out, n)  
 allpredictedCV.out = rep(NA, n)
 
@@ -188,24 +181,23 @@ all_best_Types = rep(NA,nfolds)
 all_best_Pars = vector("list",nfolds)
 all_best_Model = vector("list",nfolds)
 
+resamples = list("list")
+
 ### model assessment OUTER shell ###
 for (ii in 1:nfolds)  {  
   groupii = (cvgroups.out == ii)
   
   # define the training set for outer loop
   train = fulldata[!groupii,]
-  dummyTrain = dummyVars(" ~. ", data = train)
   trainx = model.matrix(logRetailPrice ~ ., data = train)[,-1]
-  #dummTrainX = dummyVars(" ~. ", data = trainx)
   trainy = train$logRetailPrice
-  dummyTrainY = dummyVars(" ~. ", data = trainy)
+
 
   
   #define the validation set for outer loop
   test = fulldata[groupii,]
-  dummyTest = dummyVars(" ~. ", data = test)
   testx = model.matrix(logRetailPrice ~ ., data = test)[,-1]
-  #dummyTestX = dummyVars(" ~. ", data = testx)
+
 
   # training controls for ENET
   training = trainControl(method = "cv", number = 10)
@@ -221,26 +213,14 @@ for (ii in 1:nfolds)  {
                               trControl = training,
                               tuneGrid = expand.grid(alpha = alphalist, 
                                                      lambda = lambdalist))
-  
-  # fit_caret_ENET.full = train(ENET.model,
-  #                        data = dataused.full,   
-  #                        method = "glmnet",
-  #                        trControl = training,
-  #                        tuneGrid = expand.grid(alpha = alphalist, 
-  #                                               lambda = lambdalist))  
-  # 
+
   # cross-validation of RR model
   fit_caret_RR = train(RR.model,
                        data = dataused,   
                        method = "rlm",
                        maxit = 50,
                        trControl = training)
-  
-  # fit_caret_RR.full = train(RR.model,
-  #                      data = dataused.full,   
-  #                      method = "rlm",
-  #                      trControl = training)
-  # 
+
   # All best models
   all_best_Types = c("ENET","RR")
                      
@@ -270,20 +250,44 @@ for (ii in 1:nfolds)  {
     RRlambda = one_best_Pars[[1]]$lambda
     allpred.CV[groupii] = predict(one_best_Model, newdata = test)
   }
+  
+  resample <- postResample(pred = allpred.CV[groupii], 
+                           obs = test$logRetailPrice)
+print(paste0("The RMSE for loop ", ii, " was : ", resample[1]))
+print(paste0("The R^2 for loop ", ii, " was : ", resample[2]))
+print(paste0("The MAE for loop ", ii, " was : ", resample[3]))
 
-  ############# END ##############
-  
-  
+
 }
-coef(fit_caret_RR$finalModel, s = fit_caret_RR$bestTune$lambda)
+coef_enet <- coef(one_best_Model, s = one_best_Pars[[1]]$lambda)
+print(coef_enet)
 one_best_Type
 one_best_Pars
 one_best_RSME
 
-y <- cars04$logRetailPrice
+# build a data frame for visuals
+val = exp(cars04$logRetailPrice)
+pred = exp(allpred.CV)
+hp <- cars04$Horsepower
+weight = cars04$Weight
+compare <- data.frame(val, pred, hp, weight)
 
-# Actual VS Predicted Retail Price plot
-plot(exp(y)~exp(allpred.CV))
-abline(a = 0, b = 1, col = "blue", lwd = 2)
-abline(v = 40000, col = "red", lwd = 2, lty = 2)
+# make charts to display results
+ggplot(data = compare, aes(x = pred, y = val, color = type)) +
+  geom_point() +
+  geom_smooth(color = "blue", size = 1.5, se = FALSE) +
+  geom_abline(slope = 1, aes(color = "green"), size = 1.5) +
+  labs(x = "Predicted Retail Price", y = "True Retail Price", 
+       title = "Actual vs Predicted Reatail Price") 
+
+
+ggplot(data = compare, aes(x = weight, y = pred, color = type)) +
+  geom_point() +
+  labs(x = "Weight", y = "Predicated Retailprice", 
+       title = "Predicted Retail Price and Weight") 
+
+ggplot(data = compare, aes(x = hp, y = pred, color = type)) +
+  geom_point() +
+  labs(title = "Predicted Retail Price and Horsepower", x = "Horsepower",
+       y = "Predictecountd Retail Price")
 
