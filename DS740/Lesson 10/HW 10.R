@@ -90,6 +90,7 @@ fit_hitters = train(Salary ~ .,
                     tuneGrid = expand.grid(size = 5, decay = seq(1,2, by = 0.1)),
                     skip = FALSE,
                     trace = FALSE,
+                    linout = TRUE,
                     preProc = c("center", "scale"),
                     maxit = 2000,
                     trControl = ctrl)
@@ -112,28 +113,26 @@ garson(fit_hitters)
 answer14 <- "CHits and PutOuts"
 
 ### question 15
-realistic_hits <- sample(myHitters$Hits, 322, replace = T)
-realisticHitters <- Hitters %>%
-  mutate(AtBat = median(AtBat),
-         HmRun = median(HmRun),
-         Runs = median(Runs),
-         RBI = median(RBI),
-         Walks = median(Walks),
-         Years = median(Years),
-         CAtBat = median(CAtBat),
-         CHits = median(CHits),
-         CRuns = median(CRuns),
-         CRBI = median(CRBI),
-         CWalks = median(CWalks),
-         League = mode(League01),
-         Division = mode(Divison),
-         PutOuts = median(PutOuts),
-         Assists = median(Assists),
-         Errors = median(Errors))
-         NewLeague = mode(NewLea)
-          
+find_mode <- function(x){
+  ux <- unique(x)
+  ux[which.max(tabulate(match(x, ux)))]
+}
 
+Hits <- sample(myHitters$Hits, 263, replace = T)
 
+mydata.median <- myHitters %>% 
+  select(-c(Salary,Hits,League01,Division01,NewLeague01))
+mydata.median <- sapply(mydata.median, median)
 
+mydata.mode <- myHitters %>% select(c(League01,Division01,NewLeague01))
+mydata.mode <- sapply(mydata.mode, find_mode)
 
+mydata.df <- as.data.frame(t(c(mydata.median, mydata.mode)))
+
+mydata.list <- lapply(mydata.df, function(x) c(x))
+mydata.list$Hits <- Hits
+mydata.new <- do.call(expand.grid, mydata.list)
+head(mydata.new)
+
+predict(fit_hitters$finalModel, newdata = mydata.new)
 
