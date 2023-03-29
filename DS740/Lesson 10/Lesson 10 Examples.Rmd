@@ -1,0 +1,221 @@
+---
+title: "Lesson 10 Examples"
+author: "Abra Brisbin"
+date: "6/29/2021"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Can we predict the species of iris from its petal length and sepal length?
+```{r, message=FALSE}
+library(caret)
+
+library(nnet)
+
+library(NeuralNetTools)
+
+library(ggformula)
+library(dplyr)
+library(reshape2) # for melt
+```
+
+```{r}
+
+data_used = iris
+set.seed(100)
+
+ctrl = trainControl(method = "cv", number = 5)
+fit_species = train(Species ~ Petal.Length + Sepal.Length,
+                    data = data_used,
+                    method = "nnet",
+                    tuneGrid = expand.grid(size = 1, decay = 0),
+                    preProc = c("center", "scale"),
+                    trControl = ctrl)
+
+fit_species
+
+```
+
+```{r}
+
+fit_species$finalModel$convergence
+
+```
+
+Increase max iterations.  4 of the 5 folds (and the model fit on the full data set) converge within 500 iterations, but one requires over 4000.
+```{r}
+
+set.seed(100)
+ctrl = trainControl(method = "cv", number = 5)
+fit_species = train(Species ~ Petal.Length + Sepal.Length,
+                    data = data_used,
+                    method = "nnet",
+                    tuneGrid = expand.grid(size = 1, decay = 0),
+                    preProc = c("center", "scale"),
+                    maxit = 5000,
+                    trace = FALSE,
+                    trControl = ctrl)
+
+fit_species
+
+```
+```{r}
+fit_species$finalModel$convergence
+```
+
+```{r}
+summary(fit_species)
+```
+Create a pdf with the neural net graph.
+```{r}
+
+pdf("iris.pdf", width = 11, height = 8.5)
+
+par(mar = c(.1, .1, .1, .1))
+plotnet(fit_species, y_names = levels(iris$Species))
+
+dev.off()
+
+```
+
+```{r}
+
+head(predict(fit_species))
+
+head(predict(fit_species, type = "prob"))
+
+```
+
+```{r}
+
+varImp(fit_species)
+
+```
+
+```{r}
+
+garson(fit_species)
+
+```
+
+Interpreting effect of petal length
+```{r}
+
+example_data <- iris %>%
+  select(Petal.Length) %>%
+  mutate(Sepal.Length = median(iris$Sepal.Length))
+
+example_data <- example_data %>%
+  mutate(P_virginica = predict(fit_species, 
+                               newdata = example_data, 
+                               type = "prob")[ ,3])
+
+example_data %>%
+  gf_line(P_virginica ~ Petal.Length)
+
+```
+
+## Predicting sepal width
+
+```{r, results = 'hide'}
+
+data_used = iris
+set.seed(100)
+ctrl = trainControl(method = "cv", number = 5)
+fit_sepal = train(Sepal.Width ~ .-Species,
+                  data = data_used,
+                  method = "nnet",
+                  tuneGrid = expand.grid(size = 1:5, 
+                                         decay = c(0, .5, 10^(-c(1:7)))),
+                  preProc = c("center", "scale"),
+                  linout = TRUE,
+                  maxit = 500,
+                  trace = FALSE,
+                  trControl = ctrl)
+
+```
+
+```{r}
+
+fit_sepal$results %>%
+  gf_point(RMSE ~ size, col =~ factor(decay))
+
+fit_sepal$results %>%
+  gf_point(RMSE ~ size, col =~ factor(decay)) %>%
+  gf_refine(coord_cartesian(xlim = c(0, 5), ylim = c(0.25, 0.35))) 
+
+```
+
+```{r}
+
+olden(fit_sepal)
+
+```
+
+```{r}
+iris %>%
+  gf_smooth(Sepal.Width ~ Petal.Length, method = "lm") %>%
+  gf_point(Sepal.Width ~ Petal.Length, color =~ Species) 
+  
+```
+```{r}
+
+lekprofile(fit_sepal)
+
+```
+
+## Do-it-yourself Lek profile
+```{r}
+Sepal.quantiles <- iris %>%
+  summarise(quantile(Sepal.Length, seq(0, 1, by = .2)))
+Sepal.quantiles
+```
+
+```{r}
+head(data.frame(Petal.Length = iris$Petal.Length, 
+           Sepal.Length = Sepal.quantiles[1,],
+           row.names = NULL)) # prevents a warning about row names
+```
+
+
+```{r}
+example_data = iris %>%
+  select(Petal.Length) 
+
+for(ii in 1:6){ # iterate over the quantiles of Sepal.Length
+example_data = cbind(example_data,
+                     predict(fit_species, 
+                     newdata = data.frame(Petal.Length = iris$Petal.Length, 
+                                  Sepal.Length = Sepal.quantiles[ii, ],
+                                  row.names = NULL), 
+                     type = "prob")[, 3]) # Prob(virginica)
+} # end iteration over quantiles
+                     
+names(example_data) = c("Petal.Length", "min", "q20", "q40", "q60", "q80", "max")
+# Note that "min" is actually the *prediction* for a data point with that row's value of Petal.Length
+# and Sepal.Length set equal to min(Sepal.Length).
+# Similarly, q20 is the prediction for Sepal.Length set equal to the 20th percentile.
+head(example_data)                   
+```
+But this doesn't make a legend for us:
+```{r}
+example_data %>%
+  gf_line(min ~ Petal.Length) %>%
+  gf_line(q20 ~ Petal.Length)
+```
+"Melt" the data to turn columns into rows
+```{r}
+example_data2 = melt(example_data, id.vars = "Petal.Length", measure.vars = c("min", "q20", "q40", "q60", "q80", "max"))
+
+head(example_data2)
+```
+```{r}
+names(example_data2) = c("Petal.Length", "group", "prediction")
+example_data2 %>%
+  gf_line(prediction ~ Petal.Length, col =~ group) %>%
+  gf_labs(title = "Predicted Prob(virginica) as a function of Petal.Length",
+          subtitle = "Holding Sepal.Length constant at its quantiles")
+```

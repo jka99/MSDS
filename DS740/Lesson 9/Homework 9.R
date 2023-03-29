@@ -91,35 +91,48 @@ answer7 <- "insert plot"
 ### question 8
 
 set.seed(9)
-n = dim(log)[1]
-nfolds = 10
-groups = rep(1:nfolds, n)
-cvgroups = sample(groups, n)
-allpredscv = rep(NA, n)
+n=dim(log)[1]
 
-for (ii in 1:nfolds){
+nfolds = 10
+groups = rep(1:nfolds, length = n)
+cvgroups = sample(groups, n)
+
+preds = factor(rep(NA,n),levels = c("Atlantic", "California"))
+ctrl = trainControl(method = "LOOCV")
+
+for(ii in 1:nfolds){
+  
   groupii = (cvgroups == ii)
-  trainset = log[!groupii, ]
-  testset = log[groupii, ]
+  train_set = log[!groupii, ]
+  test_set = log[groupii, ]
   
-  dataused = trainset
-  ctrl = trainControl(method = "LOOCV")
-  fit_log.dcv = train(Region ~ logSize + logRange,
-                  data = dataused,
-                  method = "svmLinear",
-                  tuneGrid = expand.grid(C = c(0.001, 0.01, 0.1, 1, 5, 10, 100)),
-                  preProcess = c("center","scale"),
-                  trControl = ctrl)
+  dataused = train_set
   
-  allpredscv[groupii] = predict(fit_log.dcv, newdata = testset)
+  fit_log.dcv = train(Region ~ logRange + logSize,
+                      data = dataused,
+                      method = "svmLinear",
+                      tuneGrid = expand.grid(C = c(0.001, 0.01, 0.1, 
+                                                   1, 5, 10, 100)),
+                      preProcess = c("center","scale"),
+                      trControl = ctrl)
+  
+  preds[groupii] = predict(fit_log.dcv, newdata = test_set)
+  
 }
+
 
 answer8 <- "insert code"
 
 ### question 9
+conf_matrix <- table(Predicted = preds, Actual = log$Region)
+conf_matrix
+
+answer9 <- sum(diag(conf_matrix)) / sum(conf_matrix)
+accuracy
+
 
 conf_mat = table(allpredscv, log$Region)
-answer9 <- sum(diag(conf_mat)) / dim(log)[1]
+x <- sum(diag(conf_mat)) / dim(log)[1]
 answer9
 
 ### question 10

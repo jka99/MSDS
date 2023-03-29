@@ -21,7 +21,6 @@ library(caret)
 summary(iris)
 ```
 
-
 Subset to focus on 2 species
 ```{r}
 my_iris <- iris %>%
@@ -31,20 +30,12 @@ my_iris <- iris %>%
                                      "virginica")))
 ```
 
-
-
-
-
-
-
-
 ```{r}
 my_iris %>%
   gf_point(Petal.Length ~ Sepal.Length, 
            color =~ Species,
            pch =~ Species)
 ```
-
 
 - Data aren't separable -> Maximal margin classifier won't work.
 - Division is roughly linear -> Can use a support vector classifier (linear kernel).
@@ -66,25 +57,13 @@ fit_iris = train(Species ~ Sepal.Length + Petal.Length,
 fit_iris
 ```
 
-
 ```{r}
 fit_iris$finalModel
 ```
 
-
-
-
-
-
 ```{r}
 attr(fit_iris$finalModel, "SVindex")
 ```
-
-
-
-
-
-
 
 ## Make a graph highlighting the support vectors:
 ```{r}
@@ -92,13 +71,6 @@ my_iris <- my_iris %>%
   tibble::rownames_to_column("Row") %>%
   mutate(is_SV = Row %in% attr(fit_iris$finalModel, "SVindex"))
 ```
-
-
-
-
-
-
-
 
 ```{r}
 my_iris %>%
@@ -112,8 +84,6 @@ my_iris %>%
 
 ```
 
-
-
 ## Plot the Support Vector Classifier
 ```{r}
 my_iris <- my_iris %>%
@@ -121,23 +91,15 @@ my_iris <- my_iris %>%
          scale_Sepal.Length = scale(Sepal.Length))
 ```
 
-
-
-
 ```{r}
 b = attr(fit_iris$finalModel, "b")
 b # -beta_0
 ```
 
-
-
 ```{r}
 coefs = attr(fit_iris$finalModel, "coef")[[1]]
 head(coefs)
 ```
-
-
-
 
 ```{r}
 iris_SV <- my_iris %>%
@@ -149,23 +111,10 @@ head(iris_SV) # Columns should be in the order x, y
               # relative to the graph
 ```
 
-
-
-
-
-
 ```{r}
 w = colSums(coefs * iris_SV) # beta_1, ... beta_p
 w
 ```
-
-
-
-
-
-
-
-
 
 Support Vector Classifier is
 $$ \beta_0 + w_1\cdot x_1 + w_2\cdot x_2 = 0 $$
@@ -181,10 +130,6 @@ my_iris %>%
   gf_abline(intercept = (b+1)/w[2], slope = -w[1]/w[2], lty = 2) %>%
   gf_abline(intercept = (b-1)/w[2], slope = -w[1]/w[2], lty = 2)
 ```
-
-
-
-
 
 ## Graphing the unscaled data
 ```{r}
@@ -204,8 +149,6 @@ yint_lower = (sd(y) * (b-1)/w[2]) +
   (w[1]/w[2] * mean(x) * sd.ratio) + mean(y)
 ```
 
-
-
 ```{r}
 my_iris %>%
   gf_point(Petal.Length ~ Sepal.Length, 
@@ -218,54 +161,28 @@ my_iris %>%
             lty = 2)
 ```
 
-
-
-
-
-
 ## Predictions
 ```{r}
 head(predict(fit_iris))
 ```
-
-
-
-
-
-
-
-
 
 ```{r}
 conf_mat = table(predict(fit_iris), my_iris$Species)
 conf_mat
 ```
 
-
-
-
 ```{r}
 # Accuracy
 sum(diag(conf_mat)) / dim(my_iris)[1]  # (48+46) / 100
 ```
-
-
 
 Recall from `caret`:
 ```{r}
 fit_iris$results[3, ]
 ```
 
-
-Why doesn't the confusion matrix give us 0.93?
-
-
-
-
-
+Why doesn't the confusion matrix give <-  us 0.93?
 
 - Confusion matrix uses the predictions about the full data set, using a model built on the full data set.
 - Expect this to be higher than the accuracy on new data.
-- `caret` reports the cross-validation accuracy (on new data).
-
-
+- `caret` reports the cross-validation accuracy (on new data)
