@@ -118,7 +118,7 @@ find_mode <- function(x){
   ux[which.max(tabulate(match(x, ux)))]
 }
 
-Hits <- sample(myHitters$Hits, 263, replace = T)
+Hits <- sample(myHitters$Hits, 263)
 
 mydata.median <- myHitters %>% 
   select(-c(Salary,Hits,League01,Division01,NewLeague01))
@@ -134,5 +134,27 @@ mydata.list$Hits <- Hits
 mydata.new <- do.call(expand.grid, mydata.list)
 head(mydata.new)
 
-predict(fit_hitters$finalModel, newdata = mydata.new)
+mydata.new <- mydata.new %>%
+mutate(sal_pred = predict(fit_hitters, newdata = mydata.new))
 
+ggplot(data = mydata.new, aes(x = Hits, y = sal_pred)) +
+  geom_point() +
+  labs (x = "Hits",
+        y = "Predicted Salary")
+
+### question 16
+answer16 <- "Agree: 0-106, 150-198
+
+There is little effect past 199 hits. I think there are a couple of reasons. There were 8 players in the training data that had more than 198 hits. The range of salaries for these players was $90K-2.4M with a median of $552K. (If you remove the lowest paid player, Steve Sax, the median jumps to 740K.) And this is right about where the data plateaus. Small n with a large range of salaries. 
+
+Other potentially influential variables will either be highly correlated to Hits or Years. To earn a run, you have to be on base or hit a homerun (a hit). The majority of times that player get on base is from a hit. RBIs are generated from hits. All the career stats require longevity to accrue. Putout and Assists are a function of position. Tony Fernandez was a short stop. It is expected that he'd have more assists than Tony Gwen in the outfield.
+
+As a side note, this is why we have advanced stats to measure player performance. Box scores sell tickets. Moneyball wins games."
+
+### question 17
+answer17 <- "Add noise to the data. Do cross-validation with multiple values for hidden nodes.
+
+
+
+
+sorry, I was more excited to discuss baseball :)"
