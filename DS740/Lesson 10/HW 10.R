@@ -84,10 +84,10 @@ myHitters = na.omit(myHitters)
 ### question 11
 set.seed(10)
 ctrl = trainControl(method = "cv", number = 10)
-fit_hitters = train(Salary ~ ., 
+fit_hitters2 = train(Salary ~ ., 
                     data = myHitters,
                     method = "nnet",
-                    tuneGrid = expand.grid(size = 5, decay = seq(1,2, by = 0.1)),
+                    tuneGrid = expand.grid(size = c(5,6,7,8,9,10), decay = seq(1,2, by = 0.1)),
                     skip = FALSE,
                     trace = FALSE,
                     linout = TRUE,

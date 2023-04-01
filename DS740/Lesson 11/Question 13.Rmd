@@ -1,0 +1,26 @@
+---
+title: "Question 13"
+author: "Jeff Watson"
+date: "2023-03-31"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+```{r cars}
+library(arules)
+data(Groceries)
+
+rules <- apriori(Groceries, parameter = list(support = 0.001, confidence = 0.5))
+
+rules <- rules[!is.redundant(rules)]
+
+pastryRules <- subset(rules, rhs %in% "pastry")
+
+inspect(pastryRules)
+```
+
