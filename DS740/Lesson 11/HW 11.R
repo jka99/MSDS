@@ -86,12 +86,14 @@ hd.data <- hd %>%
   select(-ChestPain)
 
 ### question 15
-hd$Age = discretize(hd$Age, breaks = 3, ordered = T, method = "interval")
+hd.data <- hd.data %>%
+mutate(Age = discretize(hd$Age, breaks = 3, ordered = T, method = "interval"))
 
 ### question 16
 summary(hd$BloodPressure)
-hd$BloodPressure = discretize(hd$BloodPressure, method = "fixed", 
-                              breaks = c(94, 120, 140, 200), ordered = T)
+hd.data <- hd.data %>%
+  mutate(BloodPressure = discretize(hd$BloodPressure, method = "fixed", 
+                              breaks = c(94, 120, 140, 200), ordered = T))
 
 ### question 17
 hd.data <- hd.data %>%
@@ -108,3 +110,18 @@ hd.data <- hd.data %>%
          hasHD = as.factor(hasHD))
 
 hd.trans <- as(hd.data, "transactions")
+
+### question 18
+rules18 <- apriori(hd.trans, parameter = list(support = 0.03, confidence = 0.5, maxlen = 20), 
+                 appearance = list(rhs = c("hasHD=1"), default = "lhs"))
+summary(rules18)
+
+### question 19
+rules19 <- subset(rules18, subset = lhs %in% "Sex=0")
+summary(rules19)
+
+### question 20
+rules20 <- sort(rules19, by = "lift", decreasing = TRUE)
+inspect(head(rules20), n = 3)
+summary(hd.data$Sex)
+table(hd.data$Sex, hd.data$hasHD)

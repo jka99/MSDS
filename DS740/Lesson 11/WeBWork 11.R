@@ -35,13 +35,20 @@ ames <- ames %>%
 
 ames_trans = as(ames, "transactions")
 
-rules = apriori(ames, parameter = list(support = 0.05, confidence = 0.5),
-                maxlen = 12)
-
-inspect(head(rules, n = 3, by = "lift"))
-inspect(subRules)
 rules = apriori(ames_trans, 
                 parameter = list(support = .05, confidence = 0.5, maxlen = 12))
 summary(rules)
+rules2 = apriori(ames_trans, parameter = list(support = .05, confidence = 0.5, maxlen = 12), 
+                 appearance = list(rhs = c("SalePrice=[2.14e+05,7.55e+05]"), default = "lhs") )
 non_redundant = !is.redundant(rules2)
-summary(rules2[non_redundant])
+rules3 = rules2[non_redundant]
+summary(rules3)
+rules4 = subset( rules3, subset = lhs %in% c("Bldg.Type.simple=1Fam", "Bldg.Type.simple=2Fam") )
+high_lift = subset(rules3, subset = lift > 3.5 & confidence > .95)
+summary(high_lift)
+mylhs = lhs(rules3)
+singleAnt = which( size(mylhs) == 1 )
+inspect( rules3[singleAnt] )
+inspect(head(mylhs, n = 5, by = "lift"))
+mylhs_mat = as(mylhs, Class = "matrix")
+mylhs_mat        
