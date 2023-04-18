@@ -1,3 +1,5 @@
+setwd("C:/Users/jeffe/Documents/MSDS/GitHub/MSDS/DS740/lesson 12")
+
 ############# libraries used ############
 # for methods
 # for assumption-checking 
@@ -52,8 +54,8 @@ dist.x.scale.man = dist(x.scale, method="manhattan")
 
 ############# complete  linkage ############
 # using selected p = 3 measurements
-#hc.fit = hclust(dist.xselect.scale,method="complete")  # Euclidean
-hc.fit = hclust(dist.xselect.scale.man,method="complete")  # Manhattan
+hc.fit = hclust(dist.xselect.scale,method="complete")  # Euclidean
+#hc.fit = hclust(dist.xselect.scale.man,method="complete")  # Manhattan
 linktype = "Complete Linkage"
 # distance at which merge via complete linkage occurs
 hc.fit$height
