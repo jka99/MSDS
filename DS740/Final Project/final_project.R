@@ -41,7 +41,10 @@ air.travel.data <- air.travel.data %>%
          satisfaction = as.factor(satisfaction))
 
 # Correlations
-mycor = cor(air.travel.data)
+mycor = cor(select_if(air.travel.data, is.numeric), 
+            use = "pairwise.complete.obs")
+corrplot(mycor, type = "upper", order = "hclust", 
+         col = rev(brewer.pal(n = 8, name = "RdYlBu")))
 
 # Train/Test split
 ind.full <- sample(2, nrow(air.travel.data), replace = TRUE, prob = c(0.7, 0.3))
@@ -116,7 +119,7 @@ p5 <- varImpPlot(air.travel.forest, type = 1)
 
 
 # Partial Dependence Plots
-par(mfrow = c(1,3))
+# par(mfrow = c(1,3))
 partialPlot(air.travel.forest, pred.data = air.travel.data, 
             x.var = Inflight.wifi.service, which.class = "satisfied")
 partialPlot(air.travel.forest, pred.data = air.travel.data, 
@@ -172,9 +175,9 @@ partialPlot(air.travel.forest, pred.data = air.travel.data,
 # prediction and confmat
 air.travel.forest.test.predict = predict(air.travel.forest, 
                                          air.travel.full.test)
-confmat = confusionMatrix(air.travel.forest.test.predict,
+confmat_rf = confusionMatrix(air.travel.forest.test.predict,
                           air.travel.full.test$satisfaction)
-confmat
+confmat_rf
 
 # AUC
 auc.predict = predict(air.travel.forest, air.travel.full.test, 
@@ -261,22 +264,22 @@ system.time({
 varMale <- varImp(air.travel.Male.forest)
 
 ### Neural Network
-system.time({
-c1 <- makeCluster(15)
-registerDoParallel(c1)
-set.seed(99)
-ctrl = trainControl(method = "cv", number = 5)
-fit_air.travel.data = train(satisfaction ~ ., data = air.travel.data,
-                            method = "nnet",
-                            tuneGrid = expand.grid(size = seq(1,10, by = 1),
-                                                   decay = seq(0.1,1,by = 0.1)),
-                            skip = FALSE,
-                            trace = FALSE,
-                            preProc = c("center", "scale"),
-                            maxit = 5000,
-                            trControl = ctrl)
-stopCluster(c1)
-})
+# system.time({
+# c1 <- makeCluster(15)
+# registerDoParallel(c1)
+# set.seed(99)
+# ctrl = trainControl(method = "cv", number = 5)
+# fit_air.travel.data = train(satisfaction ~ ., data = air.travel.data,
+#                             method = "nnet",
+#                             tuneGrid = expand.grid(size = seq(1,10, by = 1),
+#                                                    decay = seq(0.1,1,by = 0.1)),
+#                             skip = FALSE,
+#                             trace = FALSE,
+#                             preProc = c("center", "scale"),
+#                             maxit = 5000,
+#                             trControl = ctrl)
+# stopCluster(c1)
+# })
 # bestTune -- decay = 0.3, size = 10
 
 system.time({
@@ -284,7 +287,7 @@ c1 <- makeCluster(15)
 registerDoParallel(c1)
 set.seed(99)
 ctrl = trainControl(method = "cv", number = 5)
-fit_air.travel.data.final = train(satisfaction ~ ., data = air.travel.full.train,
+fit_air.travel.data = train(satisfaction ~ ., data = air.travel.full.train,
                             method = "nnet",
                             tuneGrid = expand.grid(size = 10,
                                                    decay = 0.3),
@@ -295,6 +298,16 @@ fit_air.travel.data.final = train(satisfaction ~ ., data = air.travel.full.train
                             trControl = ctrl)
 stopCluster(c1)
 })
+
+
+### Predict and confmat
+fit_air.travel.data.predict = predict(fit_air.travel.data,
+                                      air.travel.full.test)
+
+confmat_nnet = confusionMatrix(fit_air.travel.data.predict,
+                          air.travel.full.test$satisfaction)
+confmat_nnet
+
 
 summary(fit_air.travel.data)
 par(mar = c(0.1, 0.1, 0.1, 0.1), mfrow = c(1,1))
