@@ -49,11 +49,10 @@ answer6 <- "height, very similar, one, the other two clusters"
 hc.fit = hclust(dist.x.scale,method="complete")
 nclust = 3
 membclust = cutree(hc.fit,k=nclust)
-ggplot(data = x, aes(x=Alcohol, y=Dilution)) +
-  geom_point( color=membclust) +
-  labs(title = "Alcohol vs. Dilution by Clusters", y = "Dilution", x = "Alcohol") +
-  theme_minimal() +
-  scale_color_discrete(name = "Cluster")
+ggplot(data = wine, aes(x=Dilution, y=Alcohol, color=factor(membclust))) +
+  geom_point() + 
+  labs(title = "Alcohol vs. Dilution",color = "Cluster") 
+  
 
 ### question 8
 K_values <- c(2, 3, 4, 5)

@@ -30,7 +30,7 @@ xselect.scale = scale(xselect)
 
 ############ fitting non-hierarchical models ############
 # K-means with p = 3 measurements
-nclust=2  # try 2 and 3 and 4 clusters as well
+nclust=4  # try 2 and 3 and 4 clusters as well
 
 set.seed(12)
 clustA = kmeans(xselect.scale,nclust)$cluster
