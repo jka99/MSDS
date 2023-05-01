@@ -3,7 +3,8 @@
 #3. Read the data into R or another program and do an exploratory data analysis 
 #   and data cleaning.
 
-setwd("C:/Users/jeffe/Documents/MSDS/GitHub/MSDS/DS740/Final Project")
+setwd("F:/__Personal Stuff/MSDS")
+#setwd("C:/Users/jeffe/Documents/MSDS/GitHub/MSDS/DS740/Final Project")
 
 # Initiate Packages
 library(dplyr)
@@ -21,8 +22,10 @@ library(randomForest)
 library(gridExtra)
 
 # Read in data and combine sets
-air.travel.1 <- read.csv("air_travel_test.csv")
-air.travel.2 <- read.csv("air_travel_train.csv")
+air.travel.1 <- read.csv("test.csv")
+air.travel.2 <- read.csv("train.csv")
+# air.travel.1 <- read.csv("air_travel_test.csv")
+# air.travel.2 <- read.csv("air_travel_train.csv")
 air.travel <- rbind(air.travel.1,air.travel.2)
 
 # Remove NAs
@@ -92,6 +95,7 @@ p4 <- ggplot(data = air.travel.data, aes(x = satisfaction, fill = Customer.Type)
 grid.arrange(p1, p2, p3, p4, ncol = 2)
 
 ### Random Forest
+# Cross validation
 # system.time({
 # set.seed(99)
 # c1 <- makeCluster(15)
@@ -109,10 +113,13 @@ grid.arrange(p1, p2, p3, p4, ncol = 2)
 
 ### Main Forest
 system.time({
-air.travel.forest = randomForest(satisfaction ~ ., data = air.travel.full.train,
-                              mtry = 9, importance = TRUE,
-                              ntree = 300)
+  air.travel.forest = randomForest(satisfaction ~ ., data = air.travel.full.train,
+                                   mtry = 9, importance = TRUE,
+                                   ntree = 150)
 })
+
+# Check error rate as trees increase to make sure it's flat
+plot(air.travel.forest) # can reduce trees to 150 based on plot
 
 # Variable Importance
 p5 <- varImpPlot(air.travel.forest, type = 1)
@@ -176,7 +183,7 @@ partialPlot(air.travel.forest, pred.data = air.travel.data,
 air.travel.forest.test.predict = predict(air.travel.forest, 
                                          air.travel.full.test)
 confmat_rf = confusionMatrix(air.travel.forest.test.predict,
-                          air.travel.full.test$satisfaction)
+                             air.travel.full.test$satisfaction)
 confmat_rf
 
 # AUC
@@ -189,79 +196,28 @@ text(auc)
 ###
 
 ### Subset Forests
-par(mfrow = c(2,1))
-system.time({
-  air.travel.Loyal.forest = randomForest(satisfaction ~ ., 
-                                         data = air.travel.data.Loyal,
-                                         mtry = 9, importance = TRUE,
-                                         ntree = 300)
-  varImpPlot(air.travel.Loyal.forest, type = 1)
-})
+# Sorry for the awkward formatting here. Wrapping these used up so much space 
+# and looked worse in my opinion
+air.travel.Loyal.forest = randomForest(satisfaction ~ ., data = air.travel.data.Loyal, mtry = 9, importance = TRUE, ntree = 150)
+air.travel.disloyal.forest = randomForest(satisfaction ~ ., data = air.travel.data.disloyal, mtry = 9, importance = TRUE, ntree = 150)
+air.travel.Business.travel.forest = randomForest(satisfaction ~ ., data = air.travel.data.Business.travel, mtry = 9, importance = TRUE, ntree = 150)
+air.travel.Personal.forest = randomForest(satisfaction ~ ., data = air.travel.data.Personal, mtry = 9, importance = TRUE, ntree = 150)
+air.travel.Business.class.forest = randomForest(satisfaction ~ ., data = air.travel.data.Business.class, mtry = 9, importance = TRUE, ntree = 150)
+air.travel.Eco.class.forest = randomForest(satisfaction ~ ., data = air.travel.data.Eco.class, mtry = 9, importance = TRUE, ntree = 150)
+air.travel.Eco.Plus.class.forest = randomForest(satisfaction ~ ., data = air.travel.data.Eco.Plus.class, mtry = 9, importance = TRUE, ntree = 150)
+air.travel.Female.forest = randomForest(satisfaction ~ ., data = air.travel.data.Female, mtry = 9, importance = TRUE, ntree = 150)
+air.travel.Male.forest = randomForest(satisfaction ~ ., data = air.travel.data.Male, mtry = 9, importance = TRUE, ntree = 150)
+varImpPlot(air.travel.Loyal.forest)
+varImpPlot(air.travel.disloyal.forest)
+varImpPlot(air.travel.Business.travel.forest)
+varImpPlot(air.travel.Personal.forest)
+varImpPlot(air.travel.Business.class.forest)
+varImpPlot(air.travel.Eco.class.forest)
+varImpPlot(air.travel.Eco.Plus.class.forest)
+varImpPlot(air.travel.Female.forest)
+varImpPlot(air.travel.Male.forest)
 
-system.time({
-  air.travel.disloyal.forest = randomForest(satisfaction ~ ., 
-                                            data = air.travel.data.disloyal,
-                                            mtry = 9, importance = TRUE,
-                                            ntree = 300)
-  varImpPlot(air.travel.disloyal.forest, type = 1)
-})
 
-system.time({
-  air.travel.Business.travel.forest = randomForest(satisfaction ~ ., 
-                                                   data = air.travel.data.Business.travel,
-                                                   mtry = 9, importance = TRUE,
-                                                   ntree = 300)
-  varImpPlot(air.travel.Business.travel.forest, type = 1)
-})
-
-system.time({
-  air.travel.Personal.forest = randomForest(satisfaction ~ ., 
-                                            data = air.travel.data.Personal,
-                                            mtry = 9, importance = TRUE,
-                                            ntree = 300)
-  varImpPlot(air.travel.Personal.forest, type = 1)
-})
-
-system.time({
-  air.travel.Business.class.forest = randomForest(satisfaction ~ ., 
-                                                  data = air.travel.data.Business.class,
-                                                  mtry = 9, importance = TRUE,
-                                                  ntree = 300)
-  varImpPlot(air.travel.Business.class.forest, type = 1)
-})
-
-system.time({
-  air.travel.Eco.class.forest = randomForest(satisfaction ~ ., 
-                                             data = air.travel.data.Eco.class,
-                                             mtry = 9, importance = TRUE,
-                                             ntree = 300)
-  varImpPlot(air.travel.Eco.class.forest, type = 1)
-})
-
-system.time({
-  air.travel.Eco.Plus.class.forest = randomForest(satisfaction ~ ., 
-                                                  data = air.travel.data.Eco.Plus.class,
-                                                  mtry = 9, importance = TRUE,
-                                                  ntree = 300)
-  varImpPlot(air.travel.Eco.Plus.class.forest, type = 1)
-})
-
-system.time({
-  air.travel.Female.forest = randomForest(satisfaction ~ ., 
-                                          data = air.travel.data.Female,
-                                          mtry = 9, importance = TRUE,
-                                          ntree = 300)
-  varImpPlot(air.travel.Female.forest, type = 1)
-})
-
-system.time({
-  air.travel.Male.forest = randomForest(satisfaction ~ ., 
-                                        data = air.travel.data.Male,
-                                        mtry = 9, importance = TRUE,
-                                        ntree = 300)
-  varImpPlot(air.travel.Male.forest, type = 2)
-})
-varMale <- varImp(air.travel.Male.forest)
 
 ### Neural Network
 # system.time({
@@ -280,24 +236,27 @@ varMale <- varImp(air.travel.Male.forest)
 #                             trControl = ctrl)
 # stopCluster(c1)
 # })
-# bestTune -- decay = 0.3, size = 10
+# fit_air.travel.data$bestTune -- decay = 0.3, size = 10
+#
+# fit_air.travel.data$finalModel$convergence -- converged!
 
+registerDoSEQ()
 system.time({
-c1 <- makeCluster(15)
-registerDoParallel(c1)
-set.seed(99)
-ctrl = trainControl(method = "cv", number = 5)
-fit_air.travel.data = train(satisfaction ~ ., data = air.travel.full.train,
-                            method = "nnet",
-                            tuneGrid = expand.grid(size = 10,
-                                                   decay = 0.3),
-                            skip = FALSE,
-                            trace = FALSE,
-                            preProc = c("center", "scale"),
-                            maxit = 1000,
-                            trControl = ctrl)
-stopCluster(c1)
+  set.seed(99)
+  ctrl = trainControl(method = "cv", number = 5)
+  fit_air.travel.data = train(satisfaction ~ ., data = air.travel.full.train,
+                              method = "nnet",
+                              tuneGrid = expand.grid(size = 10,
+                                                     decay = 0.3),
+                              skip = FALSE,
+                              trace = FALSE,
+                              preProc = c("center", "scale"),
+                              maxit = 2000,
+                              trControl = ctrl)
 })
+
+# Check convergence
+fit_air.travel.data$finalModel$convergence
 
 
 ### Predict and confmat
@@ -305,14 +264,33 @@ fit_air.travel.data.predict = predict(fit_air.travel.data,
                                       air.travel.full.test)
 
 confmat_nnet = confusionMatrix(fit_air.travel.data.predict,
-                          air.travel.full.test$satisfaction)
+                               air.travel.full.test$satisfaction)
 confmat_nnet
 
-
+# Plot NNET
 summary(fit_air.travel.data)
 par(mar = c(0.1, 0.1, 0.1, 0.1), mfrow = c(1,1))
 plotnet(fit_air.travel.data)
 
-olden(fit_air.travel.data) + 
+
+system.time({
+  c1 <- makeCluster(15)
+  registerDoParallel(c1)
+  set.seed(99)
+  ctrl = trainControl(method = "cv", number = 5)
+  fit_air.travel.data.full = train(satisfaction ~ ., data = air.travel.data,
+                              method = "nnet",
+                              tuneGrid = expand.grid(size = 10,
+                                                     decay = 0.3),
+                              skip = FALSE,
+                              trace = FALSE,
+                              preProc = c("center", "scale"),
+                              maxit = 2000,
+                              trControl = ctrl)
+  stopCluster(c1)
+})
+
+# Variable Importance
+olden(fit_air.travel.data.full) + 
   labs(title = "Variable Importance") +
   theme(axis.text.x = element_text(angle = 60, hjust = 1))
