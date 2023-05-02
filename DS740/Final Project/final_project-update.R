@@ -3,8 +3,8 @@
 #3. Read the data into R or another program and do an exploratory data analysis 
 #   and data cleaning.
 
-setwd("F:/__Personal Stuff/MSDS")
-#setwd("C:/Users/jeffe/Documents/MSDS/GitHub/MSDS/DS740/Final Project")
+#setwd("F:/__Personal Stuff/MSDS")
+setwd("C:/Users/jeffe/Documents/MSDS/GitHub/MSDS/DS740/Final Project")
 
 # Initiate Packages
 library(dplyr)
@@ -22,10 +22,10 @@ library(randomForest)
 library(gridExtra)
 
 # Read in data and combine sets
-air.travel.1 <- read.csv("test.csv")
-air.travel.2 <- read.csv("train.csv")
-# air.travel.1 <- read.csv("air_travel_test.csv")
-# air.travel.2 <- read.csv("air_travel_train.csv")
+#air.travel.1 <- read.csv("test.csv")
+#air.travel.2 <- read.csv("train.csv")
+air.travel.1 <- read.csv("air_travel_test.csv")
+air.travel.2 <- read.csv("air_travel_train.csv")
 air.travel <- rbind(air.travel.1,air.travel.2)
 
 # Remove NAs
@@ -106,7 +106,7 @@ grid.arrange(p2, p4, ncol = 1)
 # c1 <- makeCluster(15)
 # registerDoParallel(c1)
 # data_used = air.travel.data
-# ctrl = trainControl(method = "cv", number = 5)
+# ctrl = trainControl(method = "repeatedcv", number = 5, repeats = 5)
 # air.travel.tree = train(satisfaction ~ .,
 #                         data = data_used,
 #                         method = "rf",
@@ -114,13 +114,15 @@ grid.arrange(p2, p4, ncol = 1)
 #                         trControl = ctrl)
 # stopCluster(c1)
 # })
-# bestTune -- mtry = 9
+# plot(air.travel.tree)
+# air.travel.tree$bestTune
+# bestTune -- mtry = 10
 
 ### Main Forest
 system.time({
   air.travel.forest = randomForest(satisfaction ~ ., data = air.travel.full.train,
-                                   mtry = 9, importance = TRUE,
-                                   ntree = 150)
+                                   mtry = 10, importance = TRUE,
+                                   ntree = 300)
 })
 
 # Check error rate as trees increase to make sure it's flat
@@ -225,30 +227,30 @@ varImpPlot(air.travel.Male.forest)
 
 
 ### Neural Network
-# system.time({
-# c1 <- makeCluster(15)
-# registerDoParallel(c1)
-# set.seed(99)
-# ctrl = trainControl(method = "cv", number = 5)
-# fit_air.travel.data = train(satisfaction ~ ., data = air.travel.data,
-#                             method = "nnet",
-#                             tuneGrid = expand.grid(size = seq(1,10, by = 1),
-#                                                    decay = seq(0.1,1,by = 0.1)),
-#                             skip = FALSE,
-#                             trace = FALSE,
-#                             preProc = c("center", "scale"),
-#                             maxit = 5000,
-#                             trControl = ctrl)
-# stopCluster(c1)
-# })
-# fit_air.travel.data$bestTune -- decay = 0.3, size = 10
-#
-# fit_air.travel.data$finalModel$convergence -- converged!
+system.time({
+c1 <- makeCluster(15)
+registerDoParallel(c1)
+set.seed(99)
+ctrl = trainControl(method = "repeatedcv", number = 5, repeats = 5)
+fit_air.travel.data = train(satisfaction ~ ., data = air.travel.data,
+                            method = "nnet",
+                            tuneGrid = expand.grid(size = seq(1,10, by = 1),
+                                                   decay = seq(0.1,1,by = 0.1)),
+                            skip = FALSE,
+                            trace = FALSE,
+                            preProc = c("center", "scale"),
+                            maxit = 5000,
+                            trControl = ctrl)
+stopCluster(c1)
+})
+fit_air.travel.data$bestTune #-- decay = 0.3, size = 10
+
+fit_air.travel.data$finalModel$convergence #-- converged!
 
 registerDoSEQ()
 system.time({
   set.seed(99)
-  ctrl = trainControl(method = "cv", number = 5)
+  ctrl = trainControl(method = "repeatedcv", number = 5, repeats = 5)
   fit_air.travel.data = train(satisfaction ~ ., data = air.travel.full.train,
                               method = "nnet",
                               tuneGrid = expand.grid(size = 10,
@@ -282,7 +284,7 @@ system.time({
   c1 <- makeCluster(15)
   registerDoParallel(c1)
   set.seed(99)
-  ctrl = trainControl(method = "cv", number = 5)
+  ctrl = trainControl(method = "repeatedcv", number = 5, repeats = 5)
   fit_air.travel.data.full = train(satisfaction ~ ., data = air.travel.data,
                                    method = "nnet",
                                    tuneGrid = expand.grid(size = 10,
