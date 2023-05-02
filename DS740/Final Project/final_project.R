@@ -3,8 +3,8 @@
 #3. Read the data into R or another program and do an exploratory data analysis 
 #   and data cleaning.
 
-setwd("F:/__Personal Stuff/MSDS")
-#setwd("C:/Users/jeffe/Documents/MSDS/GitHub/MSDS/DS740/Final Project")
+#setwd("F:/__Personal Stuff/MSDS")
+setwd("C:/Users/jeffe/Documents/MSDS/GitHub/MSDS/DS740/Final Project")
 
 # Initiate Packages
 library(dplyr)
@@ -22,10 +22,10 @@ library(randomForest)
 library(gridExtra)
 
 # Read in data and combine sets
-air.travel.1 <- read.csv("test.csv")
-air.travel.2 <- read.csv("train.csv")
-# air.travel.1 <- read.csv("air_travel_test.csv")
-# air.travel.2 <- read.csv("air_travel_train.csv")
+# air.travel.1 <- read.csv("test.csv")
+# air.travel.2 <- read.csv("train.csv")
+air.travel.1 <- read.csv("air_travel_test.csv")
+air.travel.2 <- read.csv("air_travel_train.csv")
 air.travel <- rbind(air.travel.1,air.travel.2)
 
 # Remove NAs

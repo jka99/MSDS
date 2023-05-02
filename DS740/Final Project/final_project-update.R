@@ -92,15 +92,26 @@ p4 <- ggplot(data = air.travel.data, aes(x = satisfaction, fill = Customer.Type)
   geom_bar(position = "dodge") +
   labs(title = "Level of Satisfaction by Customer Type")
 
-p5 <- ggplot(data = air.travel.data, aes(x = satisfaction, 
-                                         fill = as.factor(Inflight.wifi.service))) +
+p5 <- ggplot(data = air.travel.data, 
+             aes(x = satisfaction, fill = as.factor(Inflight.wifi.service))) +
   geom_bar(position = "dodge") +
   labs(title = "Level of Satisfaction by Wifi Rating")
 
+air.travel.wifi %>%
+  filter(Inflight.wifi.service == 0) %>%
+  group_by(satisfaction) %>%
+  summarise(n = n())
+
 grid.arrange(p2, p4, ncol = 1)
+grid.arrange(p5, ncol = 1)
 
 ### Random Forest
 # Cross validation
+#
+# ***WARNING*** - please be careful if you run this. You may want to 
+# reduce the number of observations. It took about 5.5 hours on a 
+# pretty beefy computer
+#
 # system.time({
 # set.seed(99)
 # c1 <- makeCluster(15)
@@ -120,19 +131,23 @@ grid.arrange(p2, p4, ncol = 1)
 
 ### Main Forest
 system.time({
-  air.travel.forest = randomForest(satisfaction ~ ., data = air.travel.full.train,
+  air.travel.forest = randomForest(satisfaction ~ ., 
+                                   data = air.travel.full.train,
                                    mtry = 10, importance = TRUE,
-                                   ntree = 300)
+                                   ntree = 1000)
 })
 
 # Check error rate as trees increase to make sure it's flat
-plot(air.travel.forest) # can reduce trees to 150 based on plot
+plot(air.travel.forest)# can reduce trees to 600 based on plot
+legend("topright", colnames(air.travel.forest$err.rate),
+       col = 1:3, lty = 1:3)
 
 # Variable Importance
-p5 <- varImpPlot(air.travel.forest, type = 1)
+varImpPlot(air.travel.forest)
 
 
 # Partial Dependence Plots
+# this section isn't particularly peppy either FYI
 # par(mfrow = c(1,3))
 partialPlot(air.travel.forest, pred.data = air.travel.data, 
             x.var = Inflight.wifi.service, which.class = "satisfied")
@@ -197,7 +212,7 @@ confmat_rf
 auc.predict = predict(air.travel.forest, air.travel.full.test, 
                       type = "prob")[,2]
 roc <- roc(air.travel.full.test$satisfaction, auc.predict)
-auc <- auc(roc)
+auc <- auc(roc); auc
 plot.roc(roc)
 text(auc)
 ###
@@ -205,15 +220,15 @@ text(auc)
 ### Subset Forests
 # Sorry for the awkward formatting here. Wrapping these used up so much space 
 # and looked worse in my opinion
-air.travel.Loyal.forest = randomForest(satisfaction ~ ., data = air.travel.data.Loyal, mtry = 9, importance = TRUE, ntree = 150)
-air.travel.disloyal.forest = randomForest(satisfaction ~ ., data = air.travel.data.disloyal, mtry = 9, importance = TRUE, ntree = 150)
-air.travel.Business.travel.forest = randomForest(satisfaction ~ ., data = air.travel.data.Business.travel, mtry = 9, importance = TRUE, ntree = 150)
-air.travel.Personal.forest = randomForest(satisfaction ~ ., data = air.travel.data.Personal, mtry = 9, importance = TRUE, ntree = 150)
-air.travel.Business.class.forest = randomForest(satisfaction ~ ., data = air.travel.data.Business.class, mtry = 9, importance = TRUE, ntree = 150)
-air.travel.Eco.class.forest = randomForest(satisfaction ~ ., data = air.travel.data.Eco.class, mtry = 9, importance = TRUE, ntree = 150)
-air.travel.Eco.Plus.class.forest = randomForest(satisfaction ~ ., data = air.travel.data.Eco.Plus.class, mtry = 9, importance = TRUE, ntree = 150)
-air.travel.Female.forest = randomForest(satisfaction ~ ., data = air.travel.data.Female, mtry = 9, importance = TRUE, ntree = 150)
-air.travel.Male.forest = randomForest(satisfaction ~ ., data = air.travel.data.Male, mtry = 9, importance = TRUE, ntree = 150)
+air.travel.Loyal.forest = randomForest(satisfaction ~ ., data = air.travel.data.Loyal, mtry = 10, importance = TRUE, ntree = 600)
+air.travel.disloyal.forest = randomForest(satisfaction ~ ., data = air.travel.data.disloyal, mtry = 10, importance = TRUE, ntree = 600)
+air.travel.Business.travel.forest = randomForest(satisfaction ~ ., data = air.travel.data.Business.travel, mtry = 10, importance = TRUE, ntree = 600)
+air.travel.Personal.forest = randomForest(satisfaction ~ ., data = air.travel.data.Personal, mtry = 10, importance = TRUE, ntree = 600)
+air.travel.Business.class.forest = randomForest(satisfaction ~ ., data = air.travel.data.Business.class, mtry = 10, importance = TRUE, ntree = 600)
+air.travel.Eco.class.forest = randomForest(satisfaction ~ ., data = air.travel.data.Eco.class, mtry = 10, importance = TRUE, ntree = 600)
+air.travel.Eco.Plus.class.forest = randomForest(satisfaction ~ ., data = air.travel.data.Eco.Plus.class, mtry = 10, importance = TRUE, ntree = 600)
+air.travel.Female.forest = randomForest(satisfaction ~ ., data = air.travel.data.Female, mtry = 10, importance = TRUE, ntree = 600)
+air.travel.Male.forest = randomForest(satisfaction ~ ., data = air.travel.data.Male, mtry = 10, importance = TRUE, ntree = 600)
 varImpPlot(air.travel.Loyal.forest)
 varImpPlot(air.travel.disloyal.forest)
 varImpPlot(air.travel.Business.travel.forest)
@@ -228,11 +243,11 @@ varImpPlot(air.travel.Male.forest)
 
 ### Neural Network
 system.time({
-c1 <- makeCluster(15)
-registerDoParallel(c1)
-set.seed(99)
-ctrl = trainControl(method = "repeatedcv", number = 5, repeats = 5)
-fit_air.travel.data = train(satisfaction ~ ., data = air.travel.data,
+  c1 <- makeCluster(19)
+  registerDoParallel(c1)
+  set.seed(99)
+  ctrl = trainControl(method = "repeatedcv", number = 5, repeats = 5)
+  fit_air.travel.data = train(satisfaction ~ ., data = air.travel.data,
                             method = "nnet",
                             tuneGrid = expand.grid(size = seq(1,10, by = 1),
                                                    decay = seq(0.1,1,by = 0.1)),
@@ -241,7 +256,7 @@ fit_air.travel.data = train(satisfaction ~ ., data = air.travel.data,
                             preProc = c("center", "scale"),
                             maxit = 5000,
                             trControl = ctrl)
-stopCluster(c1)
+  stopCluster(c1)
 })
 fit_air.travel.data$bestTune #-- decay = 0.3, size = 10
 
@@ -249,6 +264,8 @@ fit_air.travel.data$finalModel$convergence #-- converged!
 
 registerDoSEQ()
 system.time({
+  c1 <- makeCluster(19)
+  registerDoParallel(c1)
   set.seed(99)
   ctrl = trainControl(method = "repeatedcv", number = 5, repeats = 5)
   fit_air.travel.data = train(satisfaction ~ ., data = air.travel.full.train,
@@ -260,6 +277,7 @@ system.time({
                               preProc = c("center", "scale"),
                               maxit = 2000,
                               trControl = ctrl)
+  stopCluster(c1)
 })
 
 # Check convergence
@@ -298,6 +316,7 @@ system.time({
 })
 
 # Variable Importance
+varImp(fit_air.travel.full.train)
 varImp(fit_air.travel.data.full)
 
 # olden(fit_air.travel.data.full) + 
